@@ -61,7 +61,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return null;
       }
 
-      return data as UserProfile;
+      // Ensure all required fields are present with defaults
+      const profileData: UserProfile = {
+        id: data.id,
+        email: data.email,
+        full_name: data.full_name,
+        organization: data.organization,
+        plan_tier: data.plan_tier || 'covered_game',
+        commission_pct: data.commission_pct || 60,
+        total_games_played: data.total_games_played || 0,
+        active_ads_count: data.active_ads_count || 0,
+        fields_count: data.fields_count || 0,
+        created_at: data.created_at,
+        updated_at: data.updated_at
+      };
+
+      return profileData;
     } catch (error) {
       console.error('Error fetching profile:', error);
       return null;

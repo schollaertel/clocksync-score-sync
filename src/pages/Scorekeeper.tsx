@@ -14,11 +14,10 @@ interface Game {
   away_team: string;
   scheduled_time: string;
   field_id: string;
-  status: string;
+  game_status: string;
   home_score: number;
   away_score: number;
-  current_period: number;
-  game_time: number;
+  time_remaining: number;
   fields?: {
     name: string;
     location: string;
@@ -79,7 +78,20 @@ const Scorekeeper = () => {
 
       if (error) throw error;
       if (data) {
-        selectGame(data);
+        // Map database fields to our interface
+        const gameData: Game = {
+          id: data.id,
+          home_team: data.home_team,
+          away_team: data.away_team,
+          scheduled_time: data.scheduled_time,
+          field_id: data.field_id,
+          game_status: data.game_status || 'scheduled',
+          home_score: data.home_score || 0,
+          away_score: data.away_score || 0,
+          time_remaining: data.time_remaining || 900,
+          fields: data.fields
+        };
+        selectGame(gameData);
       }
     } catch (error) {
       console.error('Error fetching specific game:', error);
@@ -131,7 +143,22 @@ const Scorekeeper = () => {
         .order('scheduled_time', { ascending: true });
 
       if (error) throw error;
-      setAvailableGames(data || []);
+      
+      // Map database results to our interface
+      const games: Game[] = (data || []).map(game => ({
+        id: game.id,
+        home_team: game.home_team,
+        away_team: game.away_team,
+        scheduled_time: game.scheduled_time,
+        field_id: game.field_id,
+        game_status: game.game_status || 'scheduled',
+        home_score: game.home_score || 0,
+        away_score: game.away_score || 0,
+        time_remaining: game.time_remaining || 900,
+        fields: game.fields
+      }));
+      
+      setAvailableGames(games);
     } catch (error) {
       console.error('Error fetching games:', error);
       toast({
@@ -148,8 +175,7 @@ const Scorekeeper = () => {
     setSelectedGame(game);
     setHomeScore(game.home_score || 0);
     setAwayScore(game.away_score || 0);
-    setPeriod(game.current_period || 1);
-    setGameTime(game.game_time || 900);
+    setGameTime(game.time_remaining || 900);
   };
 
   // Local clock interval reference
@@ -217,7 +243,6 @@ const Scorekeeper = () => {
     if (!selectedGame) return;
     
     const newIsRunning = !isRunning;
-    const currentTime = Date.now();
     
     try {
       console.log('Toggling clock state to:', newIsRunning);
@@ -227,9 +252,10 @@ const Scorekeeper = () => {
         const { error } = await supabase
           .from('games')
           .update({
-            is_running: newIsRunning,
-            game_time: gameTime,
-            last_updated: new Date(currentTime).toISOString()
+            game_status: newIsRunning ? 'active' : 'paused',
+            time_remaining: gameTime,
+            home_score: homeScore,
+            away_score: awayScore
           })
           .eq('id', selectedGame.id);
 
@@ -284,9 +310,8 @@ const Scorekeeper = () => {
         const { error } = await supabase
           .from('games')
           .update({
-            is_running: false,
-            game_time: 900,
-            last_updated: new Date().toISOString()
+            game_status: 'scheduled',
+            time_remaining: 900
           })
           .eq('id', selectedGame.id);
 
@@ -329,38 +354,25 @@ const Scorekeeper = () => {
       
       const { data, error } = await supabase
         .from('games')
-        .select('is_running, game_time, last_updated, home_score, away_score, current_period')
+        .select('game_status, time_remaining, home_score, away_score')
         .eq('id', selectedGame.id)
         .single();
 
       if (error) throw error;
       if (!data) return;
 
-      const lastUpdated = new Date(data.last_updated).getTime();
-      const now = Date.now();
-      const timeDiff = Math.floor((now - lastUpdated) / 1000);
-
-      if (data.is_running) {
-        // Calculate current time based on when clock was last updated
-        const currentGameTime = Math.max(0, data.game_time - timeDiff);
-        setGameTime(currentGameTime);
-        setIsRunning(true);
-      } else {
-        setGameTime(data.game_time);
-        setIsRunning(false);
-      }
-
-      // Update scores and period
+      const isGameRunning = data.game_status === 'active';
+      
+      setGameTime(data.time_remaining || 900);
+      setIsRunning(isGameRunning);
       setHomeScore(data.home_score || 0);
       setAwayScore(data.away_score || 0);
-      setPeriod(data.current_period || 1);
       
       console.log('Clock state synced:', { 
-        isRunning: data.is_running, 
-        gameTime: data.is_running ? Math.max(0, data.game_time - timeDiff) : data.game_time,
+        isRunning: isGameRunning, 
+        gameTime: data.time_remaining,
         homeScore: data.home_score,
-        awayScore: data.away_score,
-        period: data.current_period
+        awayScore: data.away_score
       });
     } catch (error) {
       console.error('Error syncing clock state:', error);
@@ -488,7 +500,7 @@ const Scorekeeper = () => {
                   <CardHeader>
                     <div className="flex items-center justify-between mb-2">
                       <Badge className="bg-blue-500 text-white">
-                        {(game.status || 'SCHEDULED').toUpperCase()}
+                        {(game.game_status || 'SCHEDULED').toUpperCase()}
                       </Badge>
                       <div className="flex items-center text-gray-300 text-sm">
                         <MapPin className="w-4 h-4 mr-1" />
@@ -517,8 +529,7 @@ const Scorekeeper = () => {
                           <div className="text-xs text-gray-400">Home</div>
                         </div>
                         <div className="text-center">
-                          <div className="text-sm text-gray-300">Period {game.current_period || 1}</div>
-                          <div className="text-sm text-gray-300">{formatTime(game.game_time || 900)}</div>
+                          <div className="text-sm text-gray-300">{formatTime(game.time_remaining || 900)}</div>
                         </div>
                         <div className="text-center">
                           <div className="text-2xl font-bold text-white">{game.away_score || 0}</div>
@@ -544,7 +555,6 @@ const Scorekeeper = () => {
     );
   }
 
-  // Game Clock Management View
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 p-4">
       {/* Header */}
@@ -619,22 +629,16 @@ const Scorekeeper = () => {
               </div>
             </div>
 
+            
+            
             {/* Scores */}
             <div className="grid grid-cols-2 gap-8">
               {/* Home Team */}
               <div className="text-center">
                 <div className="bg-white/10 rounded-lg p-6 mb-4">
-                  {selectedGame.home_team_logo ? (
-                    <img 
-                      src={selectedGame.home_team_logo} 
-                      alt={`${selectedGame.home_team} Logo`}
-                      className="w-16 h-16 object-contain mx-auto mb-4 rounded-full"
-                    />
-                  ) : (
-                    <div className="w-16 h-16 bg-blue-500 rounded-full mx-auto mb-4 flex items-center justify-center">
-                      <Users className="w-8 h-8 text-white" />
-                    </div>
-                  )}
+                  <div className="w-16 h-16 bg-blue-500 rounded-full mx-auto mb-4 flex items-center justify-center">
+                    <Users className="w-8 h-8 text-white" />
+                  </div>
                   <h3 className="text-white text-xl font-bold mb-2">{selectedGame.home_team}</h3>
                   <div className="text-5xl font-bold text-white mb-4">{homeScore}</div>
                   <div className="flex justify-center gap-2">
@@ -663,17 +667,9 @@ const Scorekeeper = () => {
               {/* Away Team */}
               <div className="text-center">
                 <div className="bg-white/10 rounded-lg p-6 mb-4">
-                  {selectedGame.away_team_logo ? (
-                    <img 
-                      src={selectedGame.away_team_logo} 
-                      alt={`${selectedGame.away_team} Logo`}
-                      className="w-16 h-16 object-contain mx-auto mb-4 rounded-full"
-                    />
-                  ) : (
-                    <div className="w-16 h-16 bg-red-500 rounded-full mx-auto mb-4 flex items-center justify-center">
-                      <Users className="w-8 h-8 text-white" />
-                    </div>
-                  )}
+                  <div className="w-16 h-16 bg-red-500 rounded-full mx-auto mb-4 flex items-center justify-center">
+                    <Users className="w-8 h-8 text-white" />
+                  </div>
                   <h3 className="text-white text-xl font-bold mb-2">{selectedGame.away_team}</h3>
                   <div className="text-5xl font-bold text-white mb-4">{awayScore}</div>
                   <div className="flex justify-center gap-2">
@@ -854,4 +850,3 @@ const Scorekeeper = () => {
 };
 
 export default Scorekeeper;
-

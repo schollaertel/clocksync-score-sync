@@ -13,11 +13,10 @@ interface Game {
   away_team: string;
   scheduled_time: string;
   field_id: string;
-  status: string;
+  game_status: string;
   home_score: number;
   away_score: number;
-  current_period: number;
-  game_time: number;
+  time_remaining: number;
   fields?: {
     name: string;
     location: string;
@@ -79,19 +78,32 @@ const Spectator = () => {
 
       if (error) throw error;
       if (data) {
-        setSelectedGame(data);
-        setHomeScore(data.home_score || 42);
-        setAwayScore(data.away_score || 38);
-        setPeriod(data.current_period || 2);
-        setGameTime(data.game_time || 734);
-        setIsRunning(data.is_running || false);
+        // Map database fields to our interface
+        const gameData: Game = {
+          id: data.id,
+          home_team: data.home_team,
+          away_team: data.away_team,
+          scheduled_time: data.scheduled_time,
+          field_id: data.field_id,
+          game_status: data.game_status || 'scheduled',
+          home_score: data.home_score || 0,
+          away_score: data.away_score || 0,
+          time_remaining: data.time_remaining || 900,
+          fields: data.fields
+        };
+        
+        setSelectedGame(gameData);
+        setHomeScore(gameData.home_score || 42);
+        setAwayScore(gameData.away_score || 38);
+        setGameTime(gameData.time_remaining || 734);
+        setIsRunning(gameData.game_status === 'active');
         
         console.log('Loaded specific game:', {
-          id: data.id,
-          homeTeam: data.home_team,
-          awayTeam: data.away_team,
-          isRunning: data.is_running,
-          gameTime: data.game_time
+          id: gameData.id,
+          homeTeam: gameData.home_team,
+          awayTeam: gameData.away_team,
+          isRunning: gameData.game_status === 'active',
+          gameTime: gameData.time_remaining
         });
       }
     } catch (error) {
@@ -119,7 +131,7 @@ const Spectator = () => {
           )
         `)
         .eq('field_id', fieldId)
-        .eq('status', 'live')
+        .eq('game_status', 'active')
         .order('scheduled_time', { ascending: true })
         .limit(1);
 
@@ -145,19 +157,32 @@ const Spectator = () => {
       if (error) throw error;
       if (data && data.length > 0) {
         const game = data[0];
-        setSelectedGame(game);
-        setHomeScore(game.home_score || 42);
-        setAwayScore(game.away_score || 38);
-        setPeriod(game.current_period || 2);
-        setGameTime(game.game_time || 734);
-        setIsRunning(game.is_running || false);
+        // Map database fields to our interface
+        const gameData: Game = {
+          id: game.id,
+          home_team: game.home_team,
+          away_team: game.away_team,
+          scheduled_time: game.scheduled_time,
+          field_id: game.field_id,
+          game_status: game.game_status || 'scheduled',
+          home_score: game.home_score || 0,
+          away_score: game.away_score || 0,
+          time_remaining: game.time_remaining || 900,
+          fields: game.fields
+        };
+        
+        setSelectedGame(gameData);
+        setHomeScore(gameData.home_score || 42);
+        setAwayScore(gameData.away_score || 38);
+        setGameTime(gameData.time_remaining || 734);
+        setIsRunning(gameData.game_status === 'active');
         
         console.log('Loaded field game:', {
-          id: game.id,
-          homeTeam: game.home_team,
-          awayTeam: game.away_team,
-          isRunning: game.is_running,
-          gameTime: game.game_time
+          id: gameData.id,
+          homeTeam: gameData.home_team,
+          awayTeam: gameData.away_team,
+          isRunning: gameData.game_status === 'active',
+          gameTime: gameData.time_remaining
         });
       } else {
         // No games found for this field, show demo content
@@ -184,39 +209,28 @@ const Spectator = () => {
       
       const { data, error } = await supabase
         .from('games')
-        .select('is_running, game_time, last_updated, home_score, away_score, current_period')
+        .select('game_status, time_remaining, home_score, away_score')
         .eq('id', selectedGame.id)
         .single();
 
       if (error) throw error;
       if (!data) return;
 
-      const lastUpdated = new Date(data.last_updated).getTime();
-      const now = Date.now();
-      const timeDiff = Math.floor((now - lastUpdated) / 1000);
-
+      const isGameRunning = data.game_status === 'active';
+      
       // Update isRunning state
-      setIsRunning(data.is_running);
+      setIsRunning(isGameRunning);
+      setGameTime(data.time_remaining || 900);
 
-      if (data.is_running) {
-        // Calculate current time based on when clock was last updated
-        const currentGameTime = Math.max(0, data.game_time - timeDiff);
-        setGameTime(currentGameTime);
-      } else {
-        setGameTime(data.game_time);
-      }
-
-      // Update scores and period
+      // Update scores
       setHomeScore(data.home_score || 0);
       setAwayScore(data.away_score || 0);
-      setPeriod(data.current_period || 1);
       
       console.log('Clock state synced in Spectator view:', { 
-        isRunning: data.is_running, 
-        gameTime: data.is_running ? Math.max(0, data.game_time - timeDiff) : data.game_time,
+        isRunning: isGameRunning, 
+        gameTime: data.time_remaining,
         homeScore: data.home_score,
-        awayScore: data.away_score,
-        period: data.current_period
+        awayScore: data.away_score
       });
     } catch (error) {
       console.error('Error syncing clock state in Spectator view:', error);
@@ -406,17 +420,9 @@ const Spectator = () => {
               {/* Home Team */}
               <div className="text-center">
                 <div className="bg-white/10 rounded-lg p-6">
-                  {selectedGame?.home_team_logo ? (
-                    <img 
-                      src={selectedGame.home_team_logo} 
-                      alt={`${selectedGame.home_team} Logo`}
-                      className="w-16 h-16 object-contain mx-auto mb-4 rounded-full"
-                    />
-                  ) : (
-                    <div className="w-16 h-16 bg-blue-500 rounded-full mx-auto mb-4 flex items-center justify-center">
-                      <Users className="w-8 h-8 text-white" />
-                    </div>
-                  )}
+                  <div className="w-16 h-16 bg-blue-500 rounded-full mx-auto mb-4 flex items-center justify-center">
+                    <Users className="w-8 h-8 text-white" />
+                  </div>
                   <h3 className="text-white text-xl font-bold mb-2">
                     {selectedGame?.home_team || 'Thunder Hawks'}
                   </h3>
@@ -427,17 +433,9 @@ const Spectator = () => {
               {/* Away Team */}
               <div className="text-center">
                 <div className="bg-white/10 rounded-lg p-6">
-                  {selectedGame?.away_team_logo ? (
-                    <img 
-                      src={selectedGame.away_team_logo} 
-                      alt={`${selectedGame.away_team} Logo`}
-                      className="w-16 h-16 object-contain mx-auto mb-4 rounded-full"
-                    />
-                  ) : (
-                    <div className="w-16 h-16 bg-red-500 rounded-full mx-auto mb-4 flex items-center justify-center">
-                      <Users className="w-8 h-8 text-white" />
-                    </div>
-                  )}
+                  <div className="w-16 h-16 bg-red-500 rounded-full mx-auto mb-4 flex items-center justify-center">
+                    <Users className="w-8 h-8 text-white" />
+                  </div>
                   <h3 className="text-white text-xl font-bold mb-2">
                     {selectedGame?.away_team || 'Storm Eagles'}
                   </h3>
@@ -538,4 +536,3 @@ const Spectator = () => {
 };
 
 export default Spectator;
-
