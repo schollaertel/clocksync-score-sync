@@ -11,7 +11,7 @@ export const usePlanPermissions = () => {
     if (!profile) return;
     
     try {
-      // Update the total_games_played directly since we can't call the function
+      // Update the total_games_played directly
       const { error } = await supabase
         .from('profiles')
         .update({ 
@@ -53,10 +53,12 @@ export const usePlanPermissions = () => {
           .select('id')
           .eq('is_active', true)
           .in('field_id', 
-            supabase
+            // Get field IDs for this user first
+            await supabase
               .from('fields')
               .select('id')
               .eq('organization_id', profile.id)
+              .then(result => result.data?.map(f => f.id) || [])
           )
       ]);
 

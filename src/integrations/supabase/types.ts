@@ -327,30 +327,45 @@ export type Database = {
       }
       profiles: {
         Row: {
+          active_ads_count: number | null
+          commission_pct: number | null
           created_at: string | null
           email: string
+          fields_count: number | null
           full_name: string
           id: string
           organization: string
+          plan_tier: string | null
           stripe_customer_id: string | null
+          total_games_played: number | null
           updated_at: string | null
         }
         Insert: {
+          active_ads_count?: number | null
+          commission_pct?: number | null
           created_at?: string | null
           email: string
+          fields_count?: number | null
           full_name: string
           id?: string
           organization: string
+          plan_tier?: string | null
           stripe_customer_id?: string | null
+          total_games_played?: number | null
           updated_at?: string | null
         }
         Update: {
+          active_ads_count?: number | null
+          commission_pct?: number | null
           created_at?: string | null
           email?: string
+          fields_count?: number | null
           full_name?: string
           id?: string
           organization?: string
+          plan_tier?: string | null
           stripe_customer_id?: string | null
+          total_games_played?: number | null
           updated_at?: string | null
         }
         Relationships: []
