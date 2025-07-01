@@ -1,12 +1,14 @@
+
 import React from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import { Clock, Settings, LogOut, Menu } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { PlanBadge } from '@/components/PlanBadge';
 
 export const Header: React.FC = () => {
-  const { user, signOut } = useAuth();
+  const { user, profile, signOut } = useAuth();
   const navigate = useNavigate();
 
   const handleSignOut = async () => {
@@ -64,9 +66,12 @@ export const Header: React.FC = () => {
           
           <div className="flex items-center space-x-4">
             <div className="hidden sm:flex items-center space-x-2">
-              <Badge className="bg-green-500/20 text-green-400 border-green-500/50">
-                Tournament Admin
-              </Badge>
+              <PlanBadge />
+              {profile && profile.plan_tier === 'covered_game' && (
+                <Badge className="bg-orange-500/20 text-orange-400 border-orange-500/50">
+                  {profile.total_games_played}/2 games
+                </Badge>
+              )}
               <span className="text-sm text-gray-300">
                 {user.email?.split('@')[0] || 'User'}
               </span>
@@ -96,4 +101,3 @@ export const Header: React.FC = () => {
     </header>
   );
 };
-

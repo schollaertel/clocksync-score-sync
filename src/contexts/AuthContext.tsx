@@ -3,13 +3,33 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 
+export type PlanTier = 'covered_game' | 'game_day' | 'season_pass';
+
+export interface UserProfile {
+  id: string;
+  email: string;
+  full_name: string;
+  organization: string;
+  plan_tier: PlanTier;
+  commission_pct: number;
+  total_games_played: number;
+  active_ads_count: number;
+  fields_count: number;
+  created_at: string;
+  updated_at: string;
+}
+
 interface AuthContextType {
   user: User | null;
   session: Session | null;
+  profile: UserProfile | null;
   signUp: (email: string, password: string, fullName: string, organization: string) => Promise<{ error: any }>;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
   loading: boolean;
+  canAccessScoreboard: boolean;
+  canCreateAds: boolean;
+  refreshProfile: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -25,28 +45,92 @@ export const useAuth = () => {
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+
+  const fetchProfile = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
+
+      if (error) {
+        console.error('Error fetching profile:', error);
+        return null;
+      }
+
+      return data as UserProfile;
+    } catch (error) {
+      console.error('Error fetching profile:', error);
+      return null;
+    }
+  };
+
+  const refreshProfile = async () => {
+    if (!user) return;
+    
+    const profileData = await fetchProfile(user.id);
+    setProfile(profileData);
+  };
 
   useEffect(() => {
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
+      async (event, session) => {
         console.log('Auth state changed:', event, session?.user?.email);
         setSession(session);
         setUser(session?.user ?? null);
+        
+        if (session?.user) {
+          const profileData = await fetchProfile(session.user.id);
+          setProfile(profileData);
+        } else {
+          setProfile(null);
+        }
+        
         setLoading(false);
       }
     );
 
     // Check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
+      
+      if (session?.user) {
+        const profileData = await fetchProfile(session.user.id);
+        setProfile(profileData);
+      }
+      
       setLoading(false);
     });
 
     return () => subscription.unsubscribe();
   }, []);
+
+  // Calculate permissions based on plan tier and usage
+  const canAccessScoreboard = React.useMemo(() => {
+    if (!profile) return false;
+    
+    switch (profile.plan_tier) {
+      case 'game_day':
+      case 'season_pass':
+        return true;
+      case 'covered_game':
+        return profile.total_games_played < 2 || profile.active_ads_count >= profile.fields_count;
+      default:
+        return false;
+    }
+  }, [profile]);
+
+  const canCreateAds = React.useMemo(() => {
+    if (!profile) return false;
+    
+    // All users can create ads, but covered_game users need them for unlimited access
+    return true;
+  }, [profile]);
 
   const signUp = async (email: string, password: string, fullName: string, organization: string) => {
     const redirectUrl = `${window.location.origin}/`;
@@ -83,10 +167,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     <AuthContext.Provider value={{
       user,
       session,
+      profile,
       signUp,
       signIn,
       signOut,
-      loading
+      loading,
+      canAccessScoreboard,
+      canCreateAds,
+      refreshProfile
     }}>
       {children}
     </AuthContext.Provider>

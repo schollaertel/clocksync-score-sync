@@ -33,6 +33,56 @@ export type Database = {
         }
         Relationships: []
       }
+      ads: {
+        Row: {
+          ad_type: string
+          commission_pct: number
+          created_at: string | null
+          end_date: string | null
+          field_id: string | null
+          id: string
+          is_active: boolean | null
+          paid: boolean | null
+          price: number
+          sponsor_name: string
+          start_date: string | null
+        }
+        Insert: {
+          ad_type: string
+          commission_pct: number
+          created_at?: string | null
+          end_date?: string | null
+          field_id?: string | null
+          id?: string
+          is_active?: boolean | null
+          paid?: boolean | null
+          price: number
+          sponsor_name: string
+          start_date?: string | null
+        }
+        Update: {
+          ad_type?: string
+          commission_pct?: number
+          created_at?: string | null
+          end_date?: string | null
+          field_id?: string | null
+          id?: string
+          is_active?: boolean | null
+          paid?: boolean | null
+          price?: number
+          sponsor_name?: string
+          start_date?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ads_field_id_fkey"
+            columns: ["field_id"]
+            isOneToOne: false
+            referencedRelation: "fields"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       advertisements: {
         Row: {
           ad_image_url: string | null
@@ -162,6 +212,7 @@ export type Database = {
           name: string
           organization_id: string | null
           qr_code: string
+          subscription_plan: string | null
         }
         Insert: {
           created_at?: string | null
@@ -170,6 +221,7 @@ export type Database = {
           name: string
           organization_id?: string | null
           qr_code: string
+          subscription_plan?: string | null
         }
         Update: {
           created_at?: string | null
@@ -178,6 +230,7 @@ export type Database = {
           name?: string
           organization_id?: string | null
           qr_code?: string
+          subscription_plan?: string | null
         }
         Relationships: [
           {
@@ -453,7 +506,7 @@ export type Database = {
       }
     }
     Enums: {
-      [_ in never]: never
+      ad_type: "top_banner" | "main_grid" | "bottom_banner"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -568,6 +621,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      ad_type: ["top_banner", "main_grid", "bottom_banner"],
+    },
   },
 } as const
