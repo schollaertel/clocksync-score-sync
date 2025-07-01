@@ -1,21 +1,18 @@
+
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { QRCodeGenerator } from '@/components/QRCodeGenerator';
 import { PlanGate } from '@/components/PlanGate';
 import { PlanBadge } from '@/components/PlanBadge';
-import { Calendar, MapPin, Users, DollarSign, Zap, Settings, Plus, Edit, Trash2, Eye, EyeOff, Upload, Download, Clock, Trophy, Target, Gamepad2 } from 'lucide-react';
+import { FieldCard } from '@/components/field-manager/FieldCard';
+import { GameCard } from '@/components/field-manager/GameCard';
+import { AdvertisementCard } from '@/components/field-manager/AdvertisementCard';
+import { CreateFieldForm } from '@/components/field-manager/CreateFieldForm';
+import { CreateGameForm } from '@/components/field-manager/CreateGameForm';
+import { CreateAdvertisementForm } from '@/components/field-manager/CreateAdvertisementForm';
 import type { Game, Field, Advertisement } from '@/types/game';
 
 const FieldManager: React.FC = () => {
@@ -346,69 +343,21 @@ const FieldManager: React.FC = () => {
 
           <TabsContent value="fields">
             <div className="space-y-6">
-              <Card className="bg-slate-800 border-slate-700">
-                <CardHeader>
-                  <CardTitle className="text-white flex items-center gap-2">
-                    <Plus className="w-5 h-5" />
-                    Create New Field
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="fieldName" className="text-gray-300">Field Name</Label>
-                      <Input
-                        id="fieldName"
-                        value={newFieldName}
-                        onChange={(e) => setNewFieldName(e.target.value)}
-                        placeholder="Enter field name"
-                        className="bg-slate-700 border-slate-600 text-white"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="fieldLocation" className="text-gray-300">Location</Label>
-                      <Input
-                        id="fieldLocation"
-                        value={newFieldLocation}
-                        onChange={(e) => setNewFieldLocation(e.target.value)}
-                        placeholder="Enter field location"
-                        className="bg-slate-700 border-slate-600 text-white"
-                      />
-                    </div>
-                  </div>
-                  <Button onClick={createField} className="bg-green-600 hover:bg-green-700">
-                    Create Field
-                  </Button>
-                </CardContent>
-              </Card>
+              <CreateFieldForm
+                fieldName={newFieldName}
+                fieldLocation={newFieldLocation}
+                onFieldNameChange={setNewFieldName}
+                onFieldLocationChange={setNewFieldLocation}
+                onSubmit={createField}
+              />
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {fields.map((field) => (
-                  <Card key={field.id} className="bg-slate-800 border-slate-700">
-                    <CardHeader>
-                      <CardTitle className="text-white flex items-center justify-between">
-                        {field.name}
-                        <Badge variant="outline" className="text-gray-300 border-gray-600">
-                          {games.filter(g => g.field_id === field.id).length} games
-                        </Badge>
-                      </CardTitle>
-                      <CardDescription className="text-gray-400 flex items-center gap-1">
-                        <MapPin className="w-4 h-4" />
-                        {field.location}
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-3">
-                        <QRCodeGenerator 
-                          value={`${window.location.origin}/spectator?field=${field.qr_code}`}
-                          size={120}
-                        />
-                        <p className="text-sm text-gray-400">
-                          Spectators can scan this QR code to view live games
-                        </p>
-                      </div>
-                    </CardContent>
-                  </Card>
+                  <FieldCard
+                    key={field.id}
+                    field={field}
+                    gameCount={games.filter(g => g.field_id === field.id).length}
+                  />
                 ))}
               </div>
             </div>
@@ -417,107 +366,22 @@ const FieldManager: React.FC = () => {
           <TabsContent value="games">
             <PlanGate feature="scoreboard">
               <div className="space-y-6">
-                <Card className="bg-slate-800 border-slate-700">
-                  <CardHeader>
-                    <CardTitle className="text-white flex items-center gap-2">
-                      <Plus className="w-5 h-5" />
-                      Schedule New Game
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div>
-                      <Label className="text-gray-300">Select Field</Label>
-                      <Select value={selectedField?.id || ''} onValueChange={(value) => 
-                        setSelectedField(fields.find(f => f.id === value) || null)
-                      }>
-                        <SelectTrigger className="bg-slate-700 border-slate-600 text-white">
-                          <SelectValue placeholder="Choose a field" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {fields.map((field) => (
-                            <SelectItem key={field.id} value={field.id}>
-                              {field.name} - {field.location}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <div>
-                        <Label htmlFor="homeTeam" className="text-gray-300">Home Team</Label>
-                        <Input
-                          id="homeTeam"
-                          value={newGameHomeTeam}
-                          onChange={(e) => setNewGameHomeTeam(e.target.value)}
-                          placeholder="Home team name"
-                          className="bg-slate-700 border-slate-600 text-white"
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="awayTeam" className="text-gray-300">Away Team</Label>
-                        <Input
-                          id="awayTeam"
-                          value={newGameAwayTeam}
-                          onChange={(e) => setNewGameAwayTeam(e.target.value)}
-                          placeholder="Away team name"
-                          className="bg-slate-700 border-slate-600 text-white"
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="gameDateTime" className="text-gray-300">Date & Time</Label>
-                        <Input
-                          id="gameDateTime"
-                          type="datetime-local"
-                          value={newGameDateTime}
-                          onChange={(e) => setNewGameDateTime(e.target.value)}
-                          className="bg-slate-700 border-slate-600 text-white"
-                        />
-                      </div>
-                    </div>
-                    <Button onClick={createGame} className="bg-blue-600 hover:bg-blue-700">
-                      Schedule Game
-                    </Button>
-                  </CardContent>
-                </Card>
+                <CreateGameForm
+                  fields={fields}
+                  selectedField={selectedField}
+                  homeTeam={newGameHomeTeam}
+                  awayTeam={newGameAwayTeam}
+                  dateTime={newGameDateTime}
+                  onFieldSelect={setSelectedField}
+                  onHomeTeamChange={setNewGameHomeTeam}
+                  onAwayTeamChange={setNewGameAwayTeam}
+                  onDateTimeChange={setNewGameDateTime}
+                  onSubmit={createGame}
+                />
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {games.map((game) => (
-                    <Card key={game.id} className="bg-slate-800 border-slate-700">
-                      <CardHeader>
-                        <CardTitle className="text-white text-lg">
-                          {game.home_team} vs {game.away_team}
-                        </CardTitle>
-                        <CardDescription className="text-gray-400">
-                          {new Date(game.scheduled_time).toLocaleString()}
-                        </CardDescription>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="space-y-2">
-                          <div className="flex justify-between items-center">
-                            <span className="text-gray-300">Score:</span>
-                            <span className="text-white font-mono">
-                              {game.home_score} - {game.away_score}
-                            </span>
-                          </div>
-                          <div className="flex justify-between items-center">
-                            <span className="text-gray-300">Status:</span>
-                            <Badge variant={
-                              game.game_status === 'active' ? 'default' :
-                              game.game_status === 'completed' ? 'secondary' : 'outline'
-                            }>
-                              {game.game_status}
-                            </Badge>
-                          </div>
-                          <div className="flex justify-between items-center">
-                            <span className="text-gray-300">Time:</span>
-                            <span className="text-white">
-                              {Math.floor(game.time_remaining / 60)}:{(game.time_remaining % 60).toString().padStart(2, '0')}
-                            </span>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
+                    <GameCard key={game.id} game={game} />
                   ))}
                 </div>
               </div>
@@ -526,115 +390,28 @@ const FieldManager: React.FC = () => {
 
           <TabsContent value="ads">
             <div className="space-y-6">
-              <Card className="bg-slate-800 border-slate-700">
-                <CardHeader>
-                  <CardTitle className="text-white flex items-center gap-2">
-                    <Plus className="w-5 h-5" />
-                    Create Advertisement
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div>
-                    <Label className="text-gray-300">Select Field</Label>
-                    <Select value={selectedField?.id || ''} onValueChange={(value) => 
-                      setSelectedField(fields.find(f => f.id === value) || null)
-                    }>
-                      <SelectTrigger className="bg-slate-700 border-slate-600 text-white">
-                        <SelectValue placeholder="Choose a field" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {fields.map((field) => (
-                          <SelectItem key={field.id} value={field.id}>
-                            {field.name} - {field.location}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                      <Label htmlFor="adName" className="text-gray-300">Advertiser Name</Label>
-                      <Input
-                        id="adName"
-                        value={newAdName}
-                        onChange={(e) => setNewAdName(e.target.value)}
-                        placeholder="Company or sponsor name"
-                        className="bg-slate-700 border-slate-600 text-white"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="adRate" className="text-gray-300">Monthly Rate ($)</Label>
-                      <Input
-                        id="adRate"
-                        type="number"
-                        value={newAdRate}
-                        onChange={(e) => setNewAdRate(e.target.value)}
-                        placeholder="400"
-                        className="bg-slate-700 border-slate-600 text-white"
-                      />
-                    </div>
-                    <div>
-                      <Label className="text-gray-300">Position</Label>
-                      <Select value={newAdPosition} onValueChange={setNewAdPosition}>
-                        <SelectTrigger className="bg-slate-700 border-slate-600 text-white">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="primary">Primary</SelectItem>
-                          <SelectItem value="secondary">Secondary</SelectItem>
-                          <SelectItem value="banner">Banner</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                  <Button onClick={createAdvertisement} className="bg-purple-600 hover:bg-purple-700">
-                    Create Advertisement
-                  </Button>
-                </CardContent>
-              </Card>
+              <CreateAdvertisementForm
+                fields={fields}
+                selectedField={selectedField}
+                advertiserName={newAdName}
+                monthlyRate={newAdRate}
+                position={newAdPosition}
+                onFieldSelect={setSelectedField}
+                onAdvertiserNameChange={setNewAdName}
+                onMonthlyRateChange={setNewAdRate}
+                onPositionChange={setNewAdPosition}
+                onSubmit={createAdvertisement}
+              />
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {advertisements.map((ad) => (
-                  <Card key={ad.id} className="bg-slate-800 border-slate-700">
-                    <CardHeader>
-                      <CardTitle className="text-white flex items-center justify-between">
-                        {ad.advertiser_name}
-                        <div className="flex items-center gap-2">
-                          <Badge variant={ad.is_active ? 'default' : 'secondary'}>
-                            {ad.is_active ? 'Active' : 'Inactive'}
-                          </Badge>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => toggleAdvertisement(ad.id, ad.is_active)}
-                            className="text-gray-400 hover:text-white p-1"
-                          >
-                            {ad.is_active ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => deleteAdvertisement(ad.id)}
-                            className="text-red-400 hover:text-red-300 p-1"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </CardTitle>
-                      <CardDescription className="text-gray-400">
-                        {fields.find(f => f.id === ad.field_id)?.name} - {ad.position}
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="flex justify-between items-center">
-                        <span className="text-gray-300">Monthly Rate:</span>
-                        <span className="text-green-400 font-semibold">
-                          ${ad.monthly_rate || 400}
-                        </span>
-                      </div>
-                    </CardContent>
-                  </Card>
+                  <AdvertisementCard
+                    key={ad.id}
+                    advertisement={ad}
+                    fields={fields}
+                    onToggle={toggleAdvertisement}
+                    onDelete={deleteAdvertisement}
+                  />
                 ))}
               </div>
             </div>
