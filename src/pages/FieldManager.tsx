@@ -99,7 +99,25 @@ const FieldManager: React.FC = () => {
       return;
     }
 
-    setGames(data || []);
+    // Transform the data to match our Game interface
+    const transformedGames: Game[] = (data || []).map(game => ({
+      id: game.id,
+      field_id: game.field_id,
+      home_team: game.home_team,
+      away_team: game.away_team,
+      home_team_logo_url: game.home_team_logo_url,
+      away_team_logo_url: game.away_team_logo_url,
+      home_score: game.home_score || 0,
+      away_score: game.away_score || 0,
+      scheduled_time: game.scheduled_time,
+      game_status: (game.game_status === 'scheduled' || game.game_status === 'active' || game.game_status === 'completed' || game.game_status === 'cancelled') 
+        ? game.game_status as Game['game_status']
+        : 'scheduled',
+      time_remaining: game.time_remaining || 720,
+      created_at: game.created_at
+    }));
+
+    setGames(transformedGames);
   };
 
   const fetchAdvertisements = async () => {
