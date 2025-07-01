@@ -46,62 +46,45 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800">
-      {/* Header */}
-      <header className="bg-white/10 backdrop-blur-md border-b border-white/20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center space-x-3">
-              <div className="relative">
-                <div className="w-10 h-10 bg-gradient-to-br from-green-400 to-blue-500 rounded-full flex items-center justify-center">
-                  <Clock className="w-6 h-6 text-white" />
-                </div>
-                <div className="absolute -top-1 -right-1 w-4 h-4 bg-orange-500 rounded-full animate-pulse"></div>
+      {/* Hero Section */}
+      <section className="py-12 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto text-center">
+          {/* Logo */}
+          <div className="flex items-center justify-center space-x-3 mb-8">
+            <div className="relative">
+              <div className="w-16 h-16 bg-gradient-to-br from-green-400 to-blue-500 rounded-full flex items-center justify-center">
+                <Clock className="w-8 h-8 text-white" />
               </div>
-              <div>
-                <h1 className="text-2xl font-bold text-white">
-                  Clock<span className="text-green-400">Sync</span>
-                </h1>
-                <p className="text-xs text-gray-300">Sports Technology</p>
-              </div>
+              <div className="absolute -top-1 -right-1 w-6 h-6 bg-orange-500 rounded-full animate-pulse"></div>
             </div>
-            <div className="flex items-center space-x-4">
-              <div className="text-right">
-                <div className="text-white font-mono text-sm">
-                  {currentTime.toLocaleTimeString()}
-                </div>
-                <div className="text-green-400 text-xs">LIVE SYNC</div>
-              </div>
-              <Button 
-                onClick={() => navigate("/login")}
-                className="bg-green-500 hover:bg-green-600 text-white"
-              >
-                Login
-              </Button>
+            <div>
+              <h1 className="text-4xl font-bold text-white">
+                Clock<span className="text-green-400">Sync</span>
+              </h1>
+              <p className="text-sm text-gray-300">Sports Technology</p>
             </div>
           </div>
-        </div>
-      </header>
 
-      {/* Hero Section */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto text-center">
           <Badge className="mb-6 bg-green-500/20 text-green-400 border-green-500/50">
             Real-time Sports Timing Solutions
           </Badge>
-          <h1 className="text-5xl md:text-7xl font-bold text-white mb-6">
+          
+          <h2 className="text-4xl md:text-6xl font-bold text-white mb-6">
             Synchronize Your Game,<br />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-blue-500">
               Elevate Your Event
             </span>
-          </h1>
-          <p className="text-xl text-gray-300 mb-8 max-w-3xl mx-auto">
+          </h2>
+          
+          <p className="text-lg text-gray-300 mb-8 max-w-3xl mx-auto">
             Professional timing technology that generates revenue through digital advertising 
             while providing seamless tournament management for organizers, scorekeepers, and spectators.
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          
+          <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
             <Button 
               size="lg" 
-              className="bg-green-500 hover:bg-green-600 text-white px-8 py-4 text-lg"
+              className="bg-green-500 hover:bg-green-600 text-black font-semibold px-8 py-4 text-lg"
               onClick={() => navigate("/demo")}
             >
               <Zap className="w-5 h-5 mr-2" />
@@ -109,8 +92,7 @@ const Index = () => {
             </Button>
             <Button 
               size="lg" 
-              variant="outline" 
-              className="border-white/20 text-white hover:bg-white/10 px-8 py-4 text-lg"
+              className="bg-blue-500 hover:bg-blue-600 text-white font-semibold px-8 py-4 text-lg"
               onClick={() => navigate("/spectator")}
             >
               <QrCode className="w-5 h-5 mr-2" />
@@ -126,7 +108,7 @@ const Index = () => {
           <h2 className="text-3xl font-bold text-center text-white mb-12">
             Revenue-Generating Sports Technology
           </h2>
-          <div className="grid md:grid-3 gap-8">
+          <div className="grid md:grid-cols-3 gap-8">
             <Card className="bg-white/10 backdrop-blur-md border-white/20">
               <CardHeader>
                 <div className="w-12 h-12 bg-green-500 rounded-lg flex items-center justify-center mb-4">
@@ -201,7 +183,7 @@ const Index = () => {
                   <div className="text-gray-600">{plan.description}</div>
                 </CardHeader>
                 <CardContent>
-                  <ul className="space-y-2">
+                  <ul className="space-y-2 mb-6">
                     {plan.features.map((feature) => (
                       <li key={feature} className="flex items-center text-gray-700">
                         <div className="w-2 h-2 bg-green-500 rounded-full mr-3"></div>
@@ -210,8 +192,8 @@ const Index = () => {
                     ))}
                   </ul>
                   <Button 
-                    className="w-full mt-6 bg-blue-600 hover:bg-blue-700 text-white"
-                    onClick={() => navigate("/signup")}
+                    className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold"
+                    onClick={() => navigate("/auth")}
                   >
                     Start {plan.name}
                   </Button>
@@ -234,7 +216,7 @@ const Index = () => {
           <div className="grid md:grid-cols-2 gap-6">
             <Button 
               size="lg"
-              className="bg-orange-500 hover:bg-orange-600 text-white p-8 h-auto"
+              className="bg-orange-500 hover:bg-orange-600 text-white font-semibold p-8 h-auto"
               onClick={() => navigate("/scorekeeper")}
             >
               <div className="text-center">
@@ -245,7 +227,7 @@ const Index = () => {
             </Button>
             <Button 
               size="lg"
-              className="bg-blue-500 hover:bg-blue-600 text-white p-8 h-auto"
+              className="bg-blue-500 hover:bg-blue-600 text-white font-semibold p-8 h-auto"
               onClick={() => navigate("/spectator")}
             >
               <div className="text-center">

@@ -4,10 +4,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Clock, Users, Zap, QrCode, Home } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 
 const Spectator = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const fieldId = searchParams.get('field');
+  
   const [gameTime, setGameTime] = useState(734); // Demo time
   const [period] = useState(2);
   const [homeScore] = useState(42);
@@ -15,7 +18,7 @@ const Spectator = () => {
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setGameTime(time => time - 1);
+      setGameTime(time => Math.max(0, time - 1));
     }, 1000);
     return () => clearInterval(interval);
   }, []);
@@ -38,16 +41,17 @@ const Spectator = () => {
       <div className="max-w-4xl mx-auto mb-6">
         <div className="flex items-center justify-between mb-4">
           <Button
-            variant="outline"
+            className="bg-white/10 hover:bg-white/20 text-white border-white/20"
             onClick={() => navigate("/")}
-            className="text-white border-white/20 hover:bg-white/10"
           >
             <Home className="w-4 h-4 mr-2" />
             Back to Home
           </Button>
           <div className="flex items-center space-x-3">
             <QrCode className="w-6 h-6 text-green-400" />
-            <span className="text-white">Scanned via QR Code</span>
+            <span className="text-white">
+              {fieldId ? `Field: ${fieldId.slice(0, 8)}...` : 'Demo Mode'}
+            </span>
           </div>
           <Badge className="bg-blue-500 text-white">
             SPECTATOR VIEW

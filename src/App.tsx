@@ -12,6 +12,7 @@ import Demo from "./pages/Demo";
 import Scorekeeper from "./pages/Scorekeeper";
 import Spectator from "./pages/Spectator";
 import Auth from "./pages/Auth";
+import FieldManager from "./pages/FieldManager";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -41,6 +42,11 @@ const App = () => (
               <Route path="/scorekeeper" element={
                 <ProtectedRoute>
                   <Scorekeeper />
+                </ProtectedRoute>
+              } />
+              <Route path="/fields" element={
+                <ProtectedRoute>
+                  <FieldManager />
                 </ProtectedRoute>
               } />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
