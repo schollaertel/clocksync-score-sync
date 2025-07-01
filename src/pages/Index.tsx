@@ -1,10 +1,9 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Clock, Users, Trophy, DollarSign, Zap, QrCode } from "lucide-react";
+import { Clock, Users, Trophy, DollarSign, Zap, QrCode, MapPin, Calendar } from "lucide-react";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -17,33 +16,6 @@ const Index = () => {
     return () => clearInterval(timer);
   }, []);
 
-  const plans = [
-    {
-      name: "Kickoff",
-      price: "Free",
-      description: "14-day trial",
-      features: ["1 field", "Basic scoreboard", "QR code access"],
-      color: "bg-gray-100",
-      popular: false,
-    },
-    {
-      name: "Game Day",
-      price: "$99/field",
-      description: "per month",
-      features: ["Unlimited fields", "Sponsor management", "Revenue tracking", "Priority support"],
-      color: "bg-blue-50 border-blue-200",
-      popular: true,
-    },
-    {
-      name: "Season Pass",
-      price: "$79/field",
-      description: "min 3 fields",
-      features: ["Volume discount", "Advanced analytics", "White labeling", "API access"],
-      color: "bg-green-50 border-green-200",
-      popular: false,
-    },
-  ];
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800">
       {/* Hero Section */}
@@ -52,14 +24,15 @@ const Index = () => {
           {/* Logo */}
           <div className="flex items-center justify-center space-x-3 mb-8">
             <div className="relative">
-              <div className="w-16 h-16 bg-gradient-to-br from-green-400 to-blue-500 rounded-full flex items-center justify-center">
-                <Clock className="w-8 h-8 text-white" />
-              </div>
-              <div className="absolute -top-1 -right-1 w-6 h-6 bg-orange-500 rounded-full animate-pulse"></div>
+              <img 
+                src="/clocksynk-logo.png" 
+                alt="ClockSynk Logo" 
+                className="w-16 h-16 object-contain"
+              />
             </div>
             <div>
               <h1 className="text-4xl font-bold text-white">
-                Clock<span className="text-green-400">Sync</span>
+                Clock<span className="text-green-400">Synk</span>
               </h1>
               <p className="text-sm text-gray-300">Sports Technology</p>
             </div>
@@ -84,7 +57,7 @@ const Index = () => {
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
             <Button 
               size="lg" 
-              className="bg-green-500 hover:bg-green-600 text-black font-semibold px-8 py-4 text-lg"
+              className="bg-orange-500 hover:bg-orange-600 text-white font-semibold px-8 py-4 text-lg border-0"
               onClick={() => navigate("/demo")}
             >
               <Zap className="w-5 h-5 mr-2" />
@@ -92,7 +65,7 @@ const Index = () => {
             </Button>
             <Button 
               size="lg" 
-              className="bg-blue-500 hover:bg-blue-600 text-white font-semibold px-8 py-4 text-lg"
+              className="bg-orange-500 hover:bg-orange-600 text-white font-semibold px-8 py-4 text-lg border-0"
               onClick={() => navigate("/spectator")}
             >
               <QrCode className="w-5 h-5 mr-2" />
@@ -102,19 +75,21 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Revenue Model */}
+      {/* Main Features Section - Single Row */}
       <section className="py-16 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
           <h2 className="text-3xl font-bold text-center text-white mb-12">
-            Revenue-Generating Sports Technology
+            Complete Tournament Management Platform
           </h2>
-          <div className="grid md:grid-cols-3 gap-8">
-            <Card className="bg-white/10 backdrop-blur-md border-white/20">
+          
+          {/* Single row of feature cards */}
+          <div className="grid md:grid-cols-3 gap-8 mb-16">
+            <Card className="bg-white/10 backdrop-blur-md border-white/20 hover:bg-white/15 transition-all">
               <CardHeader>
                 <div className="w-12 h-12 bg-green-500 rounded-lg flex items-center justify-center mb-4">
                   <DollarSign className="w-6 h-6 text-white" />
                 </div>
-                <CardTitle className="text-white">Sponsor Revenue</CardTitle>
+                <CardTitle className="text-white">Revenue Generation</CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-gray-300 mb-4">
@@ -125,7 +100,7 @@ const Index = () => {
               </CardContent>
             </Card>
 
-            <Card className="bg-white/10 backdrop-blur-md border-white/20">
+            <Card className="bg-white/10 backdrop-blur-md border-white/20 hover:bg-white/15 transition-all">
               <CardHeader>
                 <div className="w-12 h-12 bg-blue-500 rounded-lg flex items-center justify-center mb-4">
                   <Users className="w-6 h-6 text-white" />
@@ -141,7 +116,7 @@ const Index = () => {
               </CardContent>
             </Card>
 
-            <Card className="bg-white/10 backdrop-blur-md border-white/20">
+            <Card className="bg-white/10 backdrop-blur-md border-white/20 hover:bg-white/15 transition-all">
               <CardHeader>
                 <div className="w-12 h-12 bg-orange-500 rounded-lg flex items-center justify-center mb-4">
                   <Trophy className="w-6 h-6 text-white" />
@@ -157,49 +132,121 @@ const Index = () => {
               </CardContent>
             </Card>
           </div>
-        </div>
-      </section>
 
-      {/* Pricing */}
-      <section className="py-16 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto">
-          <h2 className="text-3xl font-bold text-center text-white mb-4">
-            Field-Based Pricing
-          </h2>
-          <p className="text-center text-gray-300 mb-12">
-            Pay per field, maximize revenue from each location
-          </p>
-          <div className="grid md:grid-cols-3 gap-8">
-            {plans.map((plan) => (
-              <Card key={plan.name} className={`${plan.color} relative`}>
-                {plan.popular && (
-                  <Badge className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-green-500 text-white">
-                    Most Popular
-                  </Badge>
-                )}
+          {/* Pricing Section - Improved Layout */}
+          <div className="bg-white/5 rounded-2xl p-8 backdrop-blur-md border border-white/10">
+            <h3 className="text-2xl font-bold text-center text-white mb-4">
+              Field-Based Pricing
+            </h3>
+            <p className="text-center text-gray-300 mb-8">
+              Pay per field, maximize revenue from each location
+            </p>
+            
+            <div className="grid md:grid-cols-3 gap-6">
+              {/* Kickoff Plan */}
+              <Card className="bg-gray-100 border-gray-200 relative">
                 <CardHeader className="text-center">
-                  <CardTitle className="text-2xl text-gray-800">{plan.name}</CardTitle>
-                  <div className="text-3xl font-bold text-gray-900">{plan.price}</div>
-                  <div className="text-gray-600">{plan.description}</div>
+                  <CardTitle className="text-2xl text-gray-800">Kickoff</CardTitle>
+                  <div className="text-3xl font-bold text-gray-900">Free</div>
+                  <div className="text-gray-600">14-day trial</div>
                 </CardHeader>
                 <CardContent>
                   <ul className="space-y-2 mb-6">
-                    {plan.features.map((feature) => (
-                      <li key={feature} className="flex items-center text-gray-700">
-                        <div className="w-2 h-2 bg-green-500 rounded-full mr-3"></div>
-                        {feature}
-                      </li>
-                    ))}
+                    <li className="flex items-center text-gray-700">
+                      <div className="w-2 h-2 bg-green-500 rounded-full mr-3"></div>
+                      1 field
+                    </li>
+                    <li className="flex items-center text-gray-700">
+                      <div className="w-2 h-2 bg-green-500 rounded-full mr-3"></div>
+                      Basic scoreboard
+                    </li>
+                    <li className="flex items-center text-gray-700">
+                      <div className="w-2 h-2 bg-green-500 rounded-full mr-3"></div>
+                      QR code access
+                    </li>
                   </ul>
                   <Button 
-                    className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold"
+                    className="w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold border-0"
                     onClick={() => navigate("/auth")}
                   >
-                    Start {plan.name}
+                    Start Kickoff
                   </Button>
                 </CardContent>
               </Card>
-            ))}
+
+              {/* Game Day Plan */}
+              <Card className="bg-blue-50 border-blue-200 relative">
+                <Badge className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-green-500 text-white border-0">
+                  Most Popular
+                </Badge>
+                <CardHeader className="text-center">
+                  <CardTitle className="text-2xl text-gray-800">Game Day</CardTitle>
+                  <div className="text-3xl font-bold text-gray-900">$99/field</div>
+                  <div className="text-gray-600">per month</div>
+                </CardHeader>
+                <CardContent>
+                  <ul className="space-y-2 mb-6">
+                    <li className="flex items-center text-gray-700">
+                      <div className="w-2 h-2 bg-green-500 rounded-full mr-3"></div>
+                      Unlimited fields
+                    </li>
+                    <li className="flex items-center text-gray-700">
+                      <div className="w-2 h-2 bg-green-500 rounded-full mr-3"></div>
+                      Sponsor management
+                    </li>
+                    <li className="flex items-center text-gray-700">
+                      <div className="w-2 h-2 bg-green-500 rounded-full mr-3"></div>
+                      Revenue tracking
+                    </li>
+                    <li className="flex items-center text-gray-700">
+                      <div className="w-2 h-2 bg-green-500 rounded-full mr-3"></div>
+                      Priority support
+                    </li>
+                  </ul>
+                  <Button 
+                    className="w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold border-0"
+                    onClick={() => navigate("/auth")}
+                  >
+                    Start Game Day
+                  </Button>
+                </CardContent>
+              </Card>
+
+              {/* Season Pass Plan */}
+              <Card className="bg-green-50 border-green-200 relative">
+                <CardHeader className="text-center">
+                  <CardTitle className="text-2xl text-gray-800">Season Pass</CardTitle>
+                  <div className="text-3xl font-bold text-gray-900">$79/field</div>
+                  <div className="text-gray-600">min 3 fields</div>
+                </CardHeader>
+                <CardContent>
+                  <ul className="space-y-2 mb-6">
+                    <li className="flex items-center text-gray-700">
+                      <div className="w-2 h-2 bg-green-500 rounded-full mr-3"></div>
+                      Volume discount
+                    </li>
+                    <li className="flex items-center text-gray-700">
+                      <div className="w-2 h-2 bg-green-500 rounded-full mr-3"></div>
+                      Advanced analytics
+                    </li>
+                    <li className="flex items-center text-gray-700">
+                      <div className="w-2 h-2 bg-green-500 rounded-full mr-3"></div>
+                      White labeling
+                    </li>
+                    <li className="flex items-center text-gray-700">
+                      <div className="w-2 h-2 bg-green-500 rounded-full mr-3"></div>
+                      API access
+                    </li>
+                  </ul>
+                  <Button 
+                    className="w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold border-0"
+                    onClick={() => navigate("/auth")}
+                  >
+                    Start Season Pass
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
           </div>
         </div>
       </section>
@@ -216,7 +263,7 @@ const Index = () => {
           <div className="grid md:grid-cols-2 gap-6">
             <Button 
               size="lg"
-              className="bg-orange-500 hover:bg-orange-600 text-white font-semibold p-8 h-auto"
+              className="bg-orange-500 hover:bg-orange-600 text-white font-semibold p-8 h-auto border-0"
               onClick={() => navigate("/scorekeeper")}
             >
               <div className="text-center">
@@ -227,7 +274,7 @@ const Index = () => {
             </Button>
             <Button 
               size="lg"
-              className="bg-blue-500 hover:bg-blue-600 text-white font-semibold p-8 h-auto"
+              className="bg-orange-500 hover:bg-orange-600 text-white font-semibold p-8 h-auto border-0"
               onClick={() => navigate("/spectator")}
             >
               <div className="text-center">
@@ -244,11 +291,13 @@ const Index = () => {
       <footer className="bg-slate-900 py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto text-center">
           <div className="flex items-center justify-center space-x-3 mb-4">
-            <div className="w-8 h-8 bg-gradient-to-br from-green-400 to-blue-500 rounded-full flex items-center justify-center">
-              <Clock className="w-5 h-5 text-white" />
-            </div>
+            <img 
+              src="/clocksynk-logo.png" 
+              alt="ClockSynk Logo" 
+              className="w-8 h-8 object-contain"
+            />
             <span className="text-xl font-bold text-white">
-              Clock<span className="text-green-400">Sync</span>
+              Clock<span className="text-green-400">Synk</span>
             </span>
           </div>
           <p className="text-gray-400 mb-4">
@@ -264,3 +313,4 @@ const Index = () => {
 };
 
 export default Index;
+

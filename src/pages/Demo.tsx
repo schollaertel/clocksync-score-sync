@@ -37,9 +37,8 @@ const Demo = () => {
       <div className="max-w-6xl mx-auto mb-6">
         <div className="flex items-center justify-between mb-4">
           <Button
-            variant="outline"
             onClick={() => navigate("/")}
-            className="text-white border-white/20 hover:bg-white/10"
+            className="bg-orange-500 hover:bg-orange-600 text-white border-0"
           >
             <Home className="w-4 h-4 mr-2" />
             Back to Home
@@ -74,22 +73,19 @@ const Demo = () => {
                 <Label className="text-white mb-2 block">Subscription Plan</Label>
                 <div className="space-y-2">
                   <Button
-                    variant={plan === "kickoff" ? "default" : "outline"}
-                    className={`w-full justify-start ${plan === "kickoff" ? "bg-green-500 text-white" : "border-white/20 text-white hover:bg-white/10"}`}
+                    className={`w-full justify-start ${plan === "kickoff" ? "bg-green-500 text-white" : "bg-orange-500 hover:bg-orange-600 text-white border-0"}`}
                     onClick={() => setPlan("kickoff")}
                   >
                     Kickoff - Free (1 field)
                   </Button>
                   <Button
-                    variant={plan === "gameday" ? "default" : "outline"}
-                    className={`w-full justify-start ${plan === "gameday" ? "bg-green-500 text-white" : "border-white/20 text-white hover:bg-white/10"}`}
+                    className={`w-full justify-start ${plan === "gameday" ? "bg-green-500 text-white" : "bg-orange-500 hover:bg-orange-600 text-white border-0"}`}
                     onClick={() => setPlan("gameday")}
                   >
                     Game Day - $99/field
                   </Button>
                   <Button
-                    variant={plan === "season" ? "default" : "outline"}
-                    className={`w-full justify-start ${plan === "season" ? "bg-green-500 text-white" : "border-white/20 text-white hover:bg-white/10"}`}
+                    className={`w-full justify-start ${plan === "season" ? "bg-green-500 text-white" : "bg-orange-500 hover:bg-orange-600 text-white border-0"}`}
                     onClick={() => setPlan("season")}
                   >
                     Season Pass - $79/field (3+ fields)
