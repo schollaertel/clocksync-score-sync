@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Home } from "lucide-react";
+import { Home, AlertCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserRoles } from '@/hooks/useUserRoles';
@@ -12,39 +12,60 @@ import { RealtimeScoreboard } from '@/components/scoreboard/RealtimeScoreboard';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import type { Game, Field } from '@/types/game';
-import type { FieldAssignment } from '@/types/user';
 
 const Scorekeeper = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { canOperateScoreboard, loading: rolesLoading } = useUserRoles();
+  const { canOperateScoreboard, loading: rolesLoading, error: rolesError } = useUserRoles();
   const { toast } = useToast();
   
   const [selectedGameId, setSelectedGameId] = useState<string>('');
   const [availableGames, setAvailableGames] = useState<Game[]>([]);
   const [assignedFields, setAssignedFields] = useState<Field[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   
   const { game, isLoading: gameLoading } = useGameRealtime(selectedGameId);
 
   useEffect(() => {
-    if (!user || rolesLoading) return;
+    console.log('Scorekeeper: auth/roles state', { user: !!user, rolesLoading, canOperate: canOperateScoreboard() });
+    
+    if (!user) {
+      console.log('Scorekeeper: no user, redirecting to auth');
+      navigate('/auth');
+      return;
+    }
+    
+    if (rolesLoading) {
+      console.log('Scorekeeper: roles still loading');
+      return;
+    }
+
+    if (rolesError) {
+      console.log('Scorekeeper: roles error', rolesError);
+      setError(rolesError);
+      setLoading(false);
+      return;
+    }
     
     if (!canOperateScoreboard()) {
+      console.log('Scorekeeper: user cannot operate scoreboard');
       toast({
         title: "Access Denied",
-        description: "You don't have permission to operate the scoreboard",
+        description: "You don't have permission to operate the scoreboard. Contact your administrator for scorekeeper access.",
         variant: "destructive",
       });
       navigate('/');
       return;
     }
 
+    console.log('Scorekeeper: fetching assigned fields');
     fetchAssignedFields();
-  }, [user, canOperateScoreboard, rolesLoading]);
+  }, [user, canOperateScoreboard, rolesLoading, rolesError]);
 
   useEffect(() => {
     if (assignedFields.length > 0) {
+      console.log('Scorekeeper: fetching games for fields', assignedFields.length);
       fetchAvailableGames();
     }
   }, [assignedFields]);
@@ -53,6 +74,8 @@ const Scorekeeper = () => {
     if (!user) return;
 
     try {
+      console.log('Scorekeeper: fetching field assignments for user', user.id);
+      
       // Get field assignments for this scorekeeper
       const { data: assignments, error: assignmentError } = await supabase
         .from('field_assignments')
@@ -63,14 +86,19 @@ const Scorekeeper = () => {
         .eq('scorekeeper_id', user.id)
         .eq('is_active', true);
 
-      if (assignmentError) throw assignmentError;
+      if (assignmentError) {
+        console.error('Scorekeeper: assignment error', assignmentError);
+        throw assignmentError;
+      }
 
+      console.log('Scorekeeper: field assignments', assignments);
       const fields = assignments?.map(a => a.fields).filter(Boolean) || [];
       setAssignedFields(fields as Field[]);
 
-      console.log('Assigned fields:', fields);
+      console.log('Scorekeeper: assigned fields', fields);
     } catch (error) {
       console.error('Error fetching assigned fields:', error);
+      setError('Failed to load assigned fields');
       toast({
         title: "Error",
         description: "Failed to load assigned fields",
@@ -86,6 +114,7 @@ const Scorekeeper = () => {
 
     try {
       const fieldIds = assignedFields.map(f => f.id);
+      console.log('Scorekeeper: fetching games for field IDs', fieldIds);
       
       const { data, error } = await supabase
         .from('games')
@@ -100,7 +129,10 @@ const Scorekeeper = () => {
         .in('game_status', ['scheduled', 'active'])
         .order('scheduled_time', { ascending: true });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Scorekeeper: games fetch error', error);
+        throw error;
+      }
 
       const games: Game[] = (data || []).map(game => ({
         id: game.id,
@@ -118,7 +150,7 @@ const Scorekeeper = () => {
       }));
 
       setAvailableGames(games);
-      console.log('Available games:', games);
+      console.log('Scorekeeper: available games', games);
     } catch (error) {
       console.error('Error fetching games:', error);
       toast({
@@ -129,6 +161,7 @@ const Scorekeeper = () => {
     }
   };
 
+  // Show loading state
   if (loading || rolesLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 flex items-center justify-center">
@@ -137,6 +170,42 @@ const Scorekeeper = () => {
     );
   }
 
+  // Show error state
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800">
+        <div className="max-w-4xl mx-auto px-4 py-8">
+          <div className="flex items-center justify-between mb-6">
+            <Button
+              className="bg-orange-500 hover:bg-orange-600 text-white"
+              onClick={() => navigate("/")}
+            >
+              <Home className="w-4 h-4 mr-2" />
+              Back to Home
+            </Button>
+          </div>
+          
+          <Card className="bg-white/10 backdrop-blur-md border-white/20">
+            <CardContent className="pt-6">
+              <div className="text-center text-white">
+                <AlertCircle className="w-12 h-12 mx-auto mb-4 text-red-400" />
+                <h2 className="text-2xl font-bold mb-4">Error Loading Dashboard</h2>
+                <p className="text-gray-300 mb-4">{error}</p>
+                <Button 
+                  onClick={() => window.location.reload()}
+                  className="bg-blue-500 hover:bg-blue-600"
+                >
+                  Retry
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
+  // Show no field assignments state
   if (assignedFields.length === 0) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800">
@@ -221,7 +290,6 @@ const Scorekeeper = () => {
               <ScorekeeperControls 
                 game={game} 
                 onGameUpdate={(updatedGame) => {
-                  // Handle local game updates if needed
                   console.log('Game updated:', updatedGame);
                 }}
               />
