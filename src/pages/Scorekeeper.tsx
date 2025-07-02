@@ -16,7 +16,7 @@ import type { Game, Field } from '@/types/game';
 const Scorekeeper = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { canOperateScoreboard, loading: rolesLoading, error: rolesError } = useUserRoles();
+  const { canOperateScoreboard, loading: rolesLoading, error: rolesError, primaryRole } = useUserRoles();
   const { toast } = useToast();
   
   const [selectedGameId, setSelectedGameId] = useState<string>('');
@@ -27,96 +27,72 @@ const Scorekeeper = () => {
   
   const { game, isLoading: gameLoading } = useGameRealtime(selectedGameId);
 
+  console.log('Scorekeeper: Component state', {
+    user: !!user,
+    rolesLoading,
+    canOperate: canOperateScoreboard(),
+    primaryRole,
+    loading,
+    error
+  });
+
   useEffect(() => {
-    console.log('Scorekeeper: auth/roles state', { user: !!user, rolesLoading, canOperate: canOperateScoreboard() });
+    console.log('Scorekeeper: Main effect triggered');
     
     if (!user) {
-      console.log('Scorekeeper: no user, redirecting to auth');
+      console.log('Scorekeeper: No user, redirecting to auth');
       navigate('/auth');
       return;
     }
     
     if (rolesLoading) {
-      console.log('Scorekeeper: roles still loading');
+      console.log('Scorekeeper: Roles still loading, waiting...');
       return;
     }
 
     if (rolesError) {
-      console.log('Scorekeeper: roles error', rolesError);
+      console.log('Scorekeeper: Roles error detected:', rolesError);
       setError(rolesError);
       setLoading(false);
       return;
     }
     
-    if (!canOperateScoreboard()) {
-      console.log('Scorekeeper: user cannot operate scoreboard');
+    console.log('Scorekeeper: Checking scorekeeper permissions');
+    const canOperate = canOperateScoreboard();
+    console.log('Scorekeeper: Permission check result:', canOperate);
+    
+    if (!canOperate) {
+      console.log('Scorekeeper: User cannot operate scoreboard, showing message');
       toast({
-        title: "Access Denied",
-        description: "You don't have permission to operate the scoreboard. Contact your administrator for scorekeeper access.",
-        variant: "destructive",
+        title: "Access Information",
+        description: `You currently have ${primaryRole || 'spectator'} access. Contact your administrator for scorekeeper permissions.`,
+        variant: "default",
       });
-      navigate('/');
+      
+      // Don't redirect immediately, let them see the message
+      setTimeout(() => {
+        navigate('/');
+      }, 3000);
       return;
     }
 
-    console.log('Scorekeeper: fetching assigned fields');
-    fetchAssignedFields();
-  }, [user, canOperateScoreboard, rolesLoading, rolesError]);
+    console.log('Scorekeeper: User has scorekeeper access, fetching data');
+    fetchScorekeeperData();
+  }, [user, canOperateScoreboard, rolesLoading, rolesError, primaryRole]);
 
-  useEffect(() => {
-    if (assignedFields.length > 0) {
-      console.log('Scorekeeper: fetching games for fields', assignedFields.length);
-      fetchAvailableGames();
-    }
-  }, [assignedFields]);
-
-  const fetchAssignedFields = async () => {
+  const fetchScorekeeperData = async () => {
     if (!user) return;
+    
+    console.log('Scorekeeper: Starting data fetch');
+    setLoading(true);
+    setError(null);
 
     try {
-      console.log('Scorekeeper: fetching field assignments for user', user.id);
+      // For now, let's fetch all games to test basic functionality
+      // Later we can add field assignments
+      console.log('Scorekeeper: Fetching all available games');
       
-      // Get field assignments for this scorekeeper
-      const { data: assignments, error: assignmentError } = await supabase
-        .from('field_assignments')
-        .select(`
-          *,
-          fields (*)
-        `)
-        .eq('scorekeeper_id', user.id)
-        .eq('is_active', true);
-
-      if (assignmentError) {
-        console.error('Scorekeeper: assignment error', assignmentError);
-        throw assignmentError;
-      }
-
-      console.log('Scorekeeper: field assignments', assignments);
-      const fields = assignments?.map(a => a.fields).filter(Boolean) || [];
-      setAssignedFields(fields as Field[]);
-
-      console.log('Scorekeeper: assigned fields', fields);
-    } catch (error) {
-      console.error('Error fetching assigned fields:', error);
-      setError('Failed to load assigned fields');
-      toast({
-        title: "Error",
-        description: "Failed to load assigned fields",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchAvailableGames = async () => {
-    if (assignedFields.length === 0) return;
-
-    try {
-      const fieldIds = assignedFields.map(f => f.id);
-      console.log('Scorekeeper: fetching games for field IDs', fieldIds);
-      
-      const { data, error } = await supabase
+      const { data: gamesData, error: gamesError } = await supabase
         .from('games')
         .select(`
           *,
@@ -125,16 +101,15 @@ const Scorekeeper = () => {
             location
           )
         `)
-        .in('field_id', fieldIds)
         .in('game_status', ['scheduled', 'active'])
         .order('scheduled_time', { ascending: true });
 
-      if (error) {
-        console.error('Scorekeeper: games fetch error', error);
-        throw error;
+      if (gamesError) {
+        console.error('Scorekeeper: Games fetch error:', gamesError);
+        throw gamesError;
       }
 
-      const games: Game[] = (data || []).map(game => ({
+      const games: Game[] = (gamesData || []).map(game => ({
         id: game.id,
         field_id: game.field_id,
         home_team: game.home_team,
@@ -149,29 +124,40 @@ const Scorekeeper = () => {
         created_at: game.created_at
       }));
 
+      console.log('Scorekeeper: Games fetched successfully:', games.length);
       setAvailableGames(games);
-      console.log('Scorekeeper: available games', games);
+
     } catch (error) {
-      console.error('Error fetching games:', error);
+      console.error('Scorekeeper: Data fetch error:', error);
+      setError('Failed to load scorekeeper data');
       toast({
         title: "Error",
-        description: "Failed to load games",
+        description: "Failed to load games. Please try again.",
         variant: "destructive",
       });
+    } finally {
+      setLoading(false);
     }
   };
 
   // Show loading state
   if (loading || rolesLoading) {
+    console.log('Scorekeeper: Showing loading state');
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 flex items-center justify-center">
-        <div className="text-white text-xl">Loading scorekeeper dashboard...</div>
+        <div className="flex items-center space-x-3">
+          <div className="w-8 h-8 bg-gradient-to-br from-green-400 to-blue-500 rounded-full flex items-center justify-center animate-pulse">
+            <div className="w-4 h-4 bg-white rounded-full animate-spin"></div>
+          </div>
+          <div className="text-white text-xl">Loading scorekeeper dashboard...</div>
+        </div>
       </div>
     );
   }
 
   // Show error state
   if (error) {
+    console.log('Scorekeeper: Showing error state:', error);
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800">
         <div className="max-w-4xl mx-auto px-4 py-8">
@@ -192,7 +178,7 @@ const Scorekeeper = () => {
                 <h2 className="text-2xl font-bold mb-4">Error Loading Dashboard</h2>
                 <p className="text-gray-300 mb-4">{error}</p>
                 <Button 
-                  onClick={() => window.location.reload()}
+                  onClick={() => fetchScorekeeperData()}
                   className="bg-blue-500 hover:bg-blue-600"
                 >
                   Retry
@@ -205,36 +191,7 @@ const Scorekeeper = () => {
     );
   }
 
-  // Show no field assignments state
-  if (assignedFields.length === 0) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800">
-        <div className="max-w-4xl mx-auto px-4 py-8">
-          <div className="flex items-center justify-between mb-6">
-            <Button
-              className="bg-orange-500 hover:bg-orange-600 text-white"
-              onClick={() => navigate("/")}
-            >
-              <Home className="w-4 h-4 mr-2" />
-              Back to Home
-            </Button>
-          </div>
-          
-          <Card className="bg-white/10 backdrop-blur-md border-white/20">
-            <CardContent className="pt-6">
-              <div className="text-center text-white">
-                <h2 className="text-2xl font-bold mb-4">No Field Assignments</h2>
-                <p className="text-gray-300">
-                  You haven't been assigned to any fields yet. Contact your administrator to get field assignments.
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    );
-  }
-
+  console.log('Scorekeeper: Rendering main interface');
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800">
       <div className="max-w-6xl mx-auto px-4 py-8">
@@ -260,26 +217,39 @@ const Scorekeeper = () => {
           </div>
         </div>
 
-        {/* Game Selection */}
+        {/* Status Info */}
         <Card className="bg-white/10 backdrop-blur-md border-white/20 mb-6">
-          <CardHeader>
-            <CardTitle className="text-white">Select Game to Manage</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Select value={selectedGameId} onValueChange={setSelectedGameId}>
-              <SelectTrigger className="bg-white/10 border-white/20 text-white">
-                <SelectValue placeholder="Choose a game to manage..." />
-              </SelectTrigger>
-              <SelectContent>
-                {availableGames.map((game) => (
-                  <SelectItem key={game.id} value={game.id}>
-                    {game.home_team} vs {game.away_team} - {new Date(game.scheduled_time).toLocaleDateString()}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          <CardContent className="pt-6">
+            <div className="text-white">
+              <p className="mb-2">Welcome, {user?.email}</p>
+              <p className="text-sm text-gray-300">Role: {primaryRole || 'Loading...'}</p>
+              <p className="text-sm text-gray-300">Available games: {availableGames.length}</p>
+            </div>
           </CardContent>
         </Card>
+
+        {/* Game Selection */}
+        {availableGames.length > 0 && (
+          <Card className="bg-white/10 backdrop-blur-md border-white/20 mb-6">
+            <CardHeader>
+              <CardTitle className="text-white">Select Game to Manage</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Select value={selectedGameId} onValueChange={setSelectedGameId}>
+                <SelectTrigger className="bg-white/10 border-white/20 text-white">
+                  <SelectValue placeholder="Choose a game to manage..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {availableGames.map((game) => (
+                    <SelectItem key={game.id} value={game.id}>
+                      {game.home_team} vs {game.away_team} - {new Date(game.scheduled_time).toLocaleDateString()}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Scorekeeper Controls and Live Preview */}
         {selectedGameId && game && (
@@ -309,7 +279,21 @@ const Scorekeeper = () => {
         )}
 
         {/* Instructions */}
-        {!selectedGameId && (
+        {availableGames.length === 0 && (
+          <Card className="bg-white/10 backdrop-blur-md border-white/20">
+            <CardHeader>
+              <CardTitle className="text-white">No Games Available</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-gray-300">
+                <p>There are currently no games scheduled or active.</p>
+                <p>Contact your administrator to schedule games or check back later.</p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {!selectedGameId && availableGames.length > 0 && (
           <Card className="bg-white/10 backdrop-blur-md border-white/20">
             <CardHeader>
               <CardTitle className="text-white">Instructions</CardTitle>
