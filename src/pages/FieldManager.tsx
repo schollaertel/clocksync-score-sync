@@ -1,8 +1,6 @@
-
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { PlanGate } from '@/components/PlanGate';
@@ -35,6 +33,7 @@ const FieldManager: React.FC = () => {
   const [newAdPosition, setNewAdPosition] = useState('primary');
 
   useEffect(() => {
+    console.log('FieldManager mounted, user:', user?.email);
     if (user) {
       fetchData();
     }
@@ -42,6 +41,7 @@ const FieldManager: React.FC = () => {
 
   const fetchData = async () => {
     try {
+      console.log('Fetching data...');
       setLoading(true);
       await Promise.all([
         fetchFields(),
@@ -63,6 +63,7 @@ const FieldManager: React.FC = () => {
   const fetchFields = async () => {
     if (!user) return;
     
+    console.log('Fetching fields for user:', user.id);
     const { data, error } = await supabase
       .from('fields')
       .select('*')
@@ -74,12 +75,14 @@ const FieldManager: React.FC = () => {
       return;
     }
 
+    console.log('Fields fetched:', data?.length || 0);
     setFields(data || []);
   };
 
   const fetchGames = async () => {
     if (!user) return;
     
+    console.log('Fetching games for user:', user.id);
     const { data, error } = await supabase
       .from('games')
       .select(`
@@ -107,19 +110,21 @@ const FieldManager: React.FC = () => {
       home_score: game.home_score || 0,
       away_score: game.away_score || 0,
       scheduled_time: game.scheduled_time,
-      game_status: (game.game_status === 'scheduled' || game.game_status === 'active' || game.game_status === 'completed' || game.game_status === 'cancelled') 
+      game_status: (['scheduled', 'active', 'completed', 'cancelled'].includes(game.game_status)) 
         ? game.game_status as Game['game_status']
         : 'scheduled',
       time_remaining: game.time_remaining || 720,
       created_at: game.created_at
     }));
 
+    console.log('Games fetched:', transformedGames.length);
     setGames(transformedGames);
   };
 
   const fetchAdvertisements = async () => {
     if (!user) return;
     
+    console.log('Fetching advertisements for user:', user.id);
     const { data, error } = await supabase
       .from('advertisements')
       .select(`
@@ -136,6 +141,7 @@ const FieldManager: React.FC = () => {
       return;
     }
 
+    console.log('Advertisements fetched:', data?.length || 0);
     setAdvertisements(data || []);
   };
 
@@ -307,10 +313,20 @@ const FieldManager: React.FC = () => {
     });
   };
 
+  console.log('FieldManager render - loading:', loading, 'user:', !!user);
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 flex items-center justify-center">
-        <div className="text-white text-xl">Loading...</div>
+        <div className="text-white text-xl">Loading field manager...</div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 flex items-center justify-center">
+        <div className="text-white text-xl">Please log in to access field management.</div>
       </div>
     );
   }
@@ -360,6 +376,12 @@ const FieldManager: React.FC = () => {
                   />
                 ))}
               </div>
+
+              {fields.length === 0 && (
+                <div className="text-center py-12">
+                  <p className="text-gray-400 text-lg">No fields created yet. Create your first field above!</p>
+                </div>
+              )}
             </div>
           </TabsContent>
 
@@ -384,6 +406,12 @@ const FieldManager: React.FC = () => {
                     <GameCard key={game.id} game={game} />
                   ))}
                 </div>
+
+                {games.length === 0 && (
+                  <div className="text-center py-12">
+                    <p className="text-gray-400 text-lg">No games scheduled yet. Create your first game above!</p>
+                  </div>
+                )}
               </div>
             </PlanGate>
           </TabsContent>
@@ -414,6 +442,12 @@ const FieldManager: React.FC = () => {
                   />
                 ))}
               </div>
+
+              {advertisements.length === 0 && (
+                <div className="text-center py-12">
+                  <p className="text-gray-400 text-lg">No advertisements created yet. Create your first advertisement above!</p>
+                </div>
+              )}
             </div>
           </TabsContent>
         </Tabs>
