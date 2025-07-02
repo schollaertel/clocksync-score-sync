@@ -204,6 +204,41 @@ export type Database = {
         }
         Relationships: []
       }
+      field_assignments: {
+        Row: {
+          assigned_by: string | null
+          created_at: string | null
+          field_id: string
+          id: string
+          is_active: boolean | null
+          scorekeeper_id: string
+        }
+        Insert: {
+          assigned_by?: string | null
+          created_at?: string | null
+          field_id: string
+          id?: string
+          is_active?: boolean | null
+          scorekeeper_id: string
+        }
+        Update: {
+          assigned_by?: string | null
+          created_at?: string | null
+          field_id?: string
+          id?: string
+          is_active?: boolean | null
+          scorekeeper_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "field_assignments_field_id_fkey"
+            columns: ["field_id"]
+            isOneToOne: false
+            referencedRelation: "fields"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       fields: {
         Row: {
           created_at: string | null
@@ -335,6 +370,8 @@ export type Database = {
           full_name: string
           id: string
           organization: string
+          organization_type: string | null
+          parent_organization_id: string | null
           plan_tier: string | null
           stripe_customer_id: string | null
           total_games_played: number | null
@@ -349,6 +386,8 @@ export type Database = {
           full_name: string
           id?: string
           organization: string
+          organization_type?: string | null
+          parent_organization_id?: string | null
           plan_tier?: string | null
           stripe_customer_id?: string | null
           total_games_played?: number | null
@@ -363,12 +402,22 @@ export type Database = {
           full_name?: string
           id?: string
           organization?: string
+          organization_type?: string | null
+          parent_organization_id?: string | null
           plan_tier?: string | null
           stripe_customer_id?: string | null
           total_games_played?: number | null
           updated_at?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_parent_organization_id_fkey"
+            columns: ["parent_organization_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       revenue_analytics: {
         Row: {
@@ -433,6 +482,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      spectator_registrations: {
+        Row: {
+          email: string
+          first_name: string | null
+          id: string
+          last_name: string | null
+          registered_at: string | null
+          user_id: string
+        }
+        Insert: {
+          email: string
+          first_name?: string | null
+          id?: string
+          last_name?: string | null
+          registered_at?: string | null
+          user_id: string
+        }
+        Update: {
+          email?: string
+          first_name?: string | null
+          id?: string
+          last_name?: string | null
+          registered_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
       }
       sponsor_payments: {
         Row: {
@@ -510,6 +586,38 @@ export type Database = {
           },
         ]
       }
+      user_roles: {
+        Row: {
+          created_at: string | null
+          id: string
+          organization_id: string | null
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          organization_id?: string | null
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          organization_id?: string | null
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_roles_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -519,9 +627,26 @@ export type Database = {
         Args: { user_id: string; user_email: string }
         Returns: undefined
       }
+      get_user_role: {
+        Args: { _user_id: string }
+        Returns: Database["public"]["Enums"]["app_role"]
+      }
+      has_role: {
+        Args: {
+          _user_id: string
+          _role: Database["public"]["Enums"]["app_role"]
+        }
+        Returns: boolean
+      }
     }
     Enums: {
       ad_type: "top_banner" | "main_grid" | "bottom_banner"
+      app_role:
+        | "super_admin"
+        | "admin"
+        | "director"
+        | "scorekeeper"
+        | "spectator"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -638,6 +763,13 @@ export const Constants = {
   public: {
     Enums: {
       ad_type: ["top_banner", "main_grid", "bottom_banner"],
+      app_role: [
+        "super_admin",
+        "admin",
+        "director",
+        "scorekeeper",
+        "spectator",
+      ],
     },
   },
 } as const
