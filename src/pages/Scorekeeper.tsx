@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Home, AlertCircle } from "lucide-react";
+import { Home, AlertCircle, CheckCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserRoles } from '@/hooks/useUserRoles';
@@ -16,12 +16,11 @@ import type { Game, Field } from '@/types/game';
 const Scorekeeper = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { canOperateScoreboard, loading: rolesLoading, error: rolesError, primaryRole } = useUserRoles();
+  const { canOperateScoreboard, loading: rolesLoading, error: rolesError, primaryRole, roles } = useUserRoles();
   const { toast } = useToast();
   
   const [selectedGameId, setSelectedGameId] = useState<string>('');
   const [availableGames, setAvailableGames] = useState<Game[]>([]);
-  const [assignedFields, setAssignedFields] = useState<Field[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
@@ -32,6 +31,7 @@ const Scorekeeper = () => {
     rolesLoading,
     canOperate: canOperateScoreboard(),
     primaryRole,
+    rolesCount: roles.length,
     loading,
     error
   });
@@ -62,17 +62,9 @@ const Scorekeeper = () => {
     console.log('Scorekeeper: Permission check result:', canOperate);
     
     if (!canOperate) {
-      console.log('Scorekeeper: User cannot operate scoreboard, showing message');
-      toast({
-        title: "Access Information",
-        description: `You currently have ${primaryRole || 'spectator'} access. Contact your administrator for scorekeeper permissions.`,
-        variant: "default",
-      });
-      
-      // Don't redirect immediately, let them see the message
-      setTimeout(() => {
-        navigate('/');
-      }, 3000);
+      console.log('Scorekeeper: User cannot operate scoreboard');
+      setError(`Access Denied: You currently have ${primaryRole || 'spectator'} access. Contact your administrator for scorekeeper permissions.`);
+      setLoading(false);
       return;
     }
 
@@ -88,8 +80,6 @@ const Scorekeeper = () => {
     setError(null);
 
     try {
-      // For now, let's fetch all games to test basic functionality
-      // Later we can add field assignments
       console.log('Scorekeeper: Fetching all available games');
       
       const { data: gamesData, error: gamesError } = await supabase
@@ -175,13 +165,13 @@ const Scorekeeper = () => {
             <CardContent className="pt-6">
               <div className="text-center text-white">
                 <AlertCircle className="w-12 h-12 mx-auto mb-4 text-red-400" />
-                <h2 className="text-2xl font-bold mb-4">Error Loading Dashboard</h2>
+                <h2 className="text-2xl font-bold mb-4">Access Issue</h2>
                 <p className="text-gray-300 mb-4">{error}</p>
                 <Button 
-                  onClick={() => fetchScorekeeperData()}
+                  onClick={() => navigate('/')}
                   className="bg-blue-500 hover:bg-blue-600"
                 >
-                  Retry
+                  Go to Home
                 </Button>
               </div>
             </CardContent>
@@ -221,8 +211,12 @@ const Scorekeeper = () => {
         <Card className="bg-white/10 backdrop-blur-md border-white/20 mb-6">
           <CardContent className="pt-6">
             <div className="text-white">
-              <p className="mb-2">Welcome, {user?.email}</p>
+              <div className="flex items-center space-x-2 mb-2">
+                <CheckCircle className="w-5 h-5 text-green-400" />
+                <p>Welcome, {user?.email}</p>
+              </div>
               <p className="text-sm text-gray-300">Role: {primaryRole || 'Loading...'}</p>
+              <p className="text-sm text-gray-300">Total roles: {roles.length}</p>
               <p className="text-sm text-gray-300">Available games: {availableGames.length}</p>
             </div>
           </CardContent>

@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -27,22 +28,23 @@ export const useUserRoles = () => {
     const fetchRoles = async () => {
       console.log('useUserRoles: Fetching roles for user', user.id);
       setLoading(true);
+      setError(null);
       
       try {
-        // Simplified query without complex RLS
-        const { data, error } = await supabase
+        // Simple direct query - the fixed RLS policies should work now
+        const { data, error: queryError } = await supabase
           .from('user_roles')
           .select('*')
           .eq('user_id', user.id);
 
-        console.log('useUserRoles: Raw query result', { data, error });
+        console.log('useUserRoles: Query result', { data, error: queryError });
 
-        if (error) {
-          console.error('useUserRoles: Query error:', error);
-          // Don't throw, just handle gracefully
+        if (queryError) {
+          console.error('useUserRoles: Query error:', queryError);
+          // Set safe defaults on error
           setRoles([]);
-          setPrimaryRole('spectator'); // Default fallback role
-          setError(null); // Don't show error to user for missing roles
+          setPrimaryRole('spectator');
+          setError(`Failed to fetch roles: ${queryError.message}`);
           return;
         }
 
@@ -68,11 +70,10 @@ export const useUserRoles = () => {
         
         console.log('useUserRoles: Primary role determined:', primary);
         setPrimaryRole(primary);
-        setError(null);
         
       } catch (error) {
         console.error('useUserRoles: Fetch error:', error);
-        setError('Failed to load user roles');
+        setError(`Failed to load user roles: ${error}`);
         setRoles([]);
         setPrimaryRole('spectator'); // Safe fallback
       } finally {
@@ -81,11 +82,11 @@ export const useUserRoles = () => {
     };
 
     fetchRoles();
-  }, [user?.id]); // Only depend on user ID
+  }, [user?.id]);
 
   const hasRole = (role: AppRole): boolean => {
     const result = roles.some(r => r.role === role);
-    console.log('useUserRoles: hasRole check', { role, result });
+    console.log('useUserRoles: hasRole check', { role, result, rolesCount: roles.length });
     return result;
   };
 
@@ -103,7 +104,7 @@ export const useUserRoles = () => {
 
   const canOperateScoreboard = (): boolean => {
     const result = hasRole('super_admin') || hasRole('admin') || hasRole('director') || hasRole('scorekeeper');
-    console.log('useUserRoles: canOperateScoreboard', result);
+    console.log('useUserRoles: canOperateScoreboard', { result, primaryRole, rolesCount: roles.length });
     return result;
   };
 
@@ -111,7 +112,8 @@ export const useUserRoles = () => {
     rolesCount: roles.length,
     primaryRole,
     loading,
-    error: !!error
+    error: !!error,
+    canOperate: canOperateScoreboard()
   });
 
   return {
