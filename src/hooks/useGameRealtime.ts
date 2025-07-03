@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import type { Game } from '@/types/game';
@@ -54,17 +53,23 @@ export const useGameRealtime = (gameId?: string, fieldId?: string): GameRealtime
             const gameData = activeGames[0];
             const transformedGame: Game = {
               id: gameData.id,
-              field_id: gameData.field_id,
+              field_id: gameData.field_id || '',
               home_team: gameData.home_team,
               away_team: gameData.away_team,
-              home_team_logo_url: gameData.home_team_logo_url,
-              away_team_logo_url: gameData.away_team_logo_url,
+              home_team_logo_url: gameData.home_team_logo_url || undefined,
+              away_team_logo_url: gameData.away_team_logo_url || undefined,
               home_score: gameData.home_score || 0,
               away_score: gameData.away_score || 0,
               scheduled_time: gameData.scheduled_time,
               game_status: gameData.game_status as Game['game_status'],
               time_remaining: gameData.time_remaining || 900,
-              created_at: gameData.created_at
+              created_at: gameData.created_at || new Date().toISOString(),
+              current_period: gameData.current_period || 1,
+              total_periods: gameData.total_periods || 2,
+              period_length_minutes: gameData.period_length_minutes || 15,
+              intermission_length_minutes: gameData.intermission_length_minutes || 5,
+              period_start_time: gameData.period_start_time || undefined,
+              last_updated: gameData.last_updated || undefined
             };
             setGame(transformedGame);
             setIsLoading(false);
@@ -88,17 +93,23 @@ export const useGameRealtime = (gameId?: string, fieldId?: string): GameRealtime
         } else if (data) {
           const transformedGame: Game = {
             id: data.id,
-            field_id: data.field_id,
+            field_id: data.field_id || '',
             home_team: data.home_team,
             away_team: data.away_team,
-            home_team_logo_url: data.home_team_logo_url,
-            away_team_logo_url: data.away_team_logo_url,
+            home_team_logo_url: data.home_team_logo_url || undefined,
+            away_team_logo_url: data.away_team_logo_url || undefined,
             home_score: data.home_score || 0,
             away_score: data.away_score || 0,
             scheduled_time: data.scheduled_time,
             game_status: data.game_status as Game['game_status'],
             time_remaining: data.time_remaining || 900,
-            created_at: data.created_at
+            created_at: data.created_at || new Date().toISOString(),
+            current_period: data.current_period || 1,
+            total_periods: data.total_periods || 2,
+            period_length_minutes: data.period_length_minutes || 15,
+            intermission_length_minutes: data.intermission_length_minutes || 5,
+            period_start_time: data.period_start_time || undefined,
+            last_updated: data.last_updated || undefined
           };
           setGame(transformedGame);
         }
@@ -130,17 +141,23 @@ export const useGameRealtime = (gameId?: string, fieldId?: string): GameRealtime
             const updatedGame = payload.new as any;
             const transformedGame: Game = {
               id: updatedGame.id,
-              field_id: updatedGame.field_id,
+              field_id: updatedGame.field_id || '',
               home_team: updatedGame.home_team,
               away_team: updatedGame.away_team,
-              home_team_logo_url: updatedGame.home_team_logo_url,
-              away_team_logo_url: updatedGame.away_team_logo_url,
+              home_team_logo_url: updatedGame.home_team_logo_url || undefined,
+              away_team_logo_url: updatedGame.away_team_logo_url || undefined,
               home_score: updatedGame.home_score || 0,
               away_score: updatedGame.away_score || 0,
               scheduled_time: updatedGame.scheduled_time,
               game_status: updatedGame.game_status as Game['game_status'],
               time_remaining: updatedGame.time_remaining || 900,
-              created_at: updatedGame.created_at
+              created_at: updatedGame.created_at || new Date().toISOString(),
+              current_period: updatedGame.current_period || 1,
+              total_periods: updatedGame.total_periods || 2,
+              period_length_minutes: updatedGame.period_length_minutes || 15,
+              intermission_length_minutes: updatedGame.intermission_length_minutes || 5,
+              period_start_time: updatedGame.period_start_time || undefined,
+              last_updated: updatedGame.last_updated || undefined
             };
             setGame(transformedGame);
           }
