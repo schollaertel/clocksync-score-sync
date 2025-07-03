@@ -50,27 +50,30 @@ export const useRevenue = () => {
 
       if (error) throw error;
 
-      // Calculate current month revenue
-      const currentMonth = new Date().toISOString().slice(0, 7);
+      // Calculate current month revenue (fix date comparison)
+      const currentMonth = new Date();
+      const currentMonthStr = `${currentMonth.getFullYear()}-${String(currentMonth.getMonth() + 1).padStart(2, '0')}-01`;
+      
       const currentMonthData = revenueData?.find(r => 
-        r.month_year.startsWith(currentMonth)
+        r.month_year === currentMonthStr
       );
 
       // Calculate yearly revenue
       const currentYear = new Date().getFullYear();
-      const yearlyData = revenueData?.filter(r => 
-        new Date(r.month_year).getFullYear() === currentYear
-      ) || [];
+      const yearlyData = revenueData?.filter(r => {
+        const recordYear = new Date(r.month_year).getFullYear();
+        return recordYear === currentYear;
+      }) || [];
 
       const yearlyRevenue = yearlyData.reduce((sum, record) => 
         sum + (record.subscription_revenue || 0) + (record.sponsor_revenue || 0), 0);
 
-      // Fetch field-specific revenue
+      // Fetch field-specific revenue with proper error handling
       const { data: fieldsData, error: fieldsError } = await supabase
         .from('fields')
         .select(`
           name,
-          advertisements!inner(monthly_rate, is_active)
+          advertisements(monthly_rate, is_active)
         `)
         .eq('organization_id', user.id);
 
@@ -107,6 +110,18 @@ export const useRevenue = () => {
         title: 'Error',
         description: 'Failed to load revenue data',
         variant: 'destructive',
+      });
+      
+      // Set empty data to prevent crashes
+      setData({
+        monthlyRevenue: 0,
+        yearlyRevenue: 0,
+        sponsorRevenue: 0,
+        subscriptionRevenue: 0,
+        platformFees: 0,
+        growthRate: 0,
+        revenueByField: [],
+        monthlyBreakdown: []
       });
     } finally {
       setLoading(false);
