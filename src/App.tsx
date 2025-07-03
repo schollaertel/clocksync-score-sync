@@ -12,6 +12,8 @@ import Auth from "./pages/Auth";
 import Scorekeeper from "./pages/Scorekeeper";
 import Spectator from "./pages/Spectator";
 import FieldManager from "./pages/FieldManager";
+import Analytics from "./pages/Analytics";
+import AdminDashboard from "./pages/AdminDashboard";
 import Demo from "./pages/Demo";
 import NotFound from "./pages/NotFound";
 import { useEffect } from "react";
@@ -88,6 +90,16 @@ const App = () => (
                 <Route path="/fields" element={
                   <ProtectedRoute>
                     <FieldManager />
+                  </ProtectedRoute>
+                } />
+                <Route path="/analytics" element={
+                  <ProtectedRoute>
+                    <Analytics />
+                  </ProtectedRoute>
+                } />
+                <Route path="/admin" element={
+                  <ProtectedRoute>
+                    <AdminDashboard />
                   </ProtectedRoute>
                 } />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
