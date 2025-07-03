@@ -6,10 +6,11 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Play, Pause, RotateCcw, Plus, Minus, AlertTriangle, Clock } from "lucide-react";
+import { Play, Pause, RotateCcw, Plus, Minus, AlertTriangle, Clock, Bell } from "lucide-react";
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { usePenaltyTracking } from '@/hooks/usePenaltyTracking';
+import { useNotifications } from '@/hooks/useNotifications';
 import type { Game } from '@/types/game';
 
 interface ScorekeeperControlsProps {
@@ -25,6 +26,7 @@ export const ScorekeeperControls: React.FC<ScorekeeperControlsProps> = ({
   const [game, setGame] = useState(initialGame);
   const [isUpdating, setIsUpdating] = useState(false);
   const [showPenaltyDialog, setShowPenaltyDialog] = useState(false);
+  const [currentTime, setCurrentTime] = useState(new Date());
   const [penaltyForm, setPenaltyForm] = useState({
     team: 'home' as 'home' | 'away',
     player_name: '',
@@ -32,7 +34,16 @@ export const ScorekeeperControls: React.FC<ScorekeeperControlsProps> = ({
     duration_minutes: 2
   });
 
-  const { penalties, addPenalty, expirePenalty } = usePenaltyTracking(game.id);
+  const { penalties, addPenalty, expirePenalty, playAudioAlert } = usePenaltyTracking(game.id);
+  const { isSupported, permission, requestPermission, subscribe } = useNotifications();
+
+  // Update current time every second for live countdown
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   useEffect(() => {
     setGame(initialGame);
@@ -85,7 +96,7 @@ export const ScorekeeperControls: React.FC<ScorekeeperControlsProps> = ({
       [team === 'home' ? 'home_score' : 'away_score']: newScore
     });
 
-    // Log goal event
+    // Log goal event and play sound
     if (delta > 0) {
       supabase.from('game_events').insert([{
         game_id: game.id,
@@ -93,6 +104,16 @@ export const ScorekeeperControls: React.FC<ScorekeeperControlsProps> = ({
         description: `Goal scored by ${team === 'home' ? game.home_team : game.away_team}`,
         metadata: { team, score: newScore }
       }]);
+      playAudioAlert('goal');
+      
+      // Send goal notification
+      supabase.functions.invoke('send-notification', {
+        body: {
+          type: 'goal',
+          gameId: game.id,
+          message: `GOAL! ${team === 'home' ? game.home_team : game.away_team} scores! ${game.home_team} ${team === 'home' ? newScore : game.home_score} - ${team === 'away' ? newScore : game.away_score} ${game.away_team}`
+        }
+      }).catch(e => console.log('Goal notification failed:', e));
     }
   };
 
@@ -121,6 +142,28 @@ export const ScorekeeperControls: React.FC<ScorekeeperControlsProps> = ({
     });
   };
 
+  const handleNotificationSetup = async () => {
+    if (permission !== 'granted') {
+      const granted = await requestPermission();
+      if (!granted) {
+        toast({
+          title: 'Notifications Blocked',
+          description: 'Please enable notifications to receive penalty alerts',
+          variant: 'destructive',
+        });
+        return;
+      }
+    }
+
+    const success = await subscribe(game.field_id, game.id, ['penalty_end', 'goal', 'penalty']);
+    if (success) {
+      toast({
+        title: 'Notifications Enabled',
+        description: 'You will receive alerts for penalty expirations and goals',
+      });
+    }
+  };
+
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
@@ -128,10 +171,19 @@ export const ScorekeeperControls: React.FC<ScorekeeperControlsProps> = ({
   };
 
   const getTimeRemaining = (penalty: any) => {
-    const now = new Date();
     const expires = new Date(penalty.expires_at);
-    const remaining = Math.max(0, Math.floor((expires.getTime() - now.getTime()) / 1000));
+    const remaining = Math.max(0, Math.floor((expires.getTime() - currentTime.getTime()) / 1000));
     return formatTime(remaining);
+  };
+
+  const getPenaltyWarningLevel = (penalty: any) => {
+    const expires = new Date(penalty.expires_at);
+    const remaining = Math.floor((expires.getTime() - currentTime.getTime()) / 1000);
+    
+    if (remaining <= 0) return 'expired';
+    if (remaining <= 30) return 'critical';
+    if (remaining <= 60) return 'warning';
+    return 'normal';
   };
 
   return (
@@ -142,10 +194,21 @@ export const ScorekeeperControls: React.FC<ScorekeeperControlsProps> = ({
           <CardTitle className="text-white text-center">
             {game.home_team} vs {game.away_team}
           </CardTitle>
-          <div className="flex justify-center">
+          <div className="flex justify-center items-center gap-2">
             <Badge className={`${game.game_status === 'active' ? 'bg-red-500' : 'bg-gray-500'} text-white`}>
               {game.game_status === 'active' ? 'LIVE' : 'PAUSED'}
             </Badge>
+            {isSupported && (
+              <Button
+                onClick={handleNotificationSetup}
+                size="sm"
+                variant="outline"
+                className="text-white border-white/20"
+              >
+                <Bell className="w-4 h-4 mr-1" />
+                Alerts {permission === 'granted' ? '✓' : ''}
+              </Button>
+            )}
           </div>
         </CardHeader>
       </Card>
@@ -314,31 +377,46 @@ export const ScorekeeperControls: React.FC<ScorekeeperControlsProps> = ({
             <p className="text-gray-400 text-center py-4">No active penalties</p>
           ) : (
             <div className="space-y-2">
-              {penalties.map((penalty) => (
-                <div key={penalty.id} className="flex items-center justify-between bg-white/5 rounded p-3">
-                  <div className="flex items-center gap-3">
-                    <Badge variant={penalty.team === 'home' ? 'default' : 'destructive'}>
-                      {penalty.team === 'home' ? game.home_team : game.away_team}
-                    </Badge>
-                    <span className="text-white font-medium">{penalty.player_name}</span>
-                    <span className="text-gray-300">{penalty.penalty_type}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="flex items-center gap-1 text-yellow-400">
-                      <Clock className="w-4 h-4" />
-                      <span className="font-mono">{getTimeRemaining(penalty)}</span>
+              {penalties.map((penalty) => {
+                const warningLevel = getPenaltyWarningLevel(penalty);
+                return (
+                  <div key={penalty.id} className={`flex items-center justify-between rounded p-3 ${
+                    warningLevel === 'expired' ? 'bg-red-500/20 border border-red-500' :
+                    warningLevel === 'critical' ? 'bg-orange-500/20 border border-orange-500' :
+                    warningLevel === 'warning' ? 'bg-yellow-500/20 border border-yellow-500' :
+                    'bg-white/5'
+                  }`}>
+                    <div className="flex items-center gap-3">
+                      <Badge variant={penalty.team === 'home' ? 'default' : 'destructive'}>
+                        {penalty.team === 'home' ? game.home_team : game.away_team}
+                      </Badge>
+                      <span className="text-white font-medium">{penalty.player_name}</span>
+                      <span className="text-gray-300">{penalty.penalty_type}</span>
                     </div>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => expirePenalty(penalty.id)}
-                      className="text-white border-white/20"
-                    >
-                      End
-                    </Button>
+                    <div className="flex items-center gap-2">
+                      <div className={`flex items-center gap-1 ${
+                        warningLevel === 'expired' ? 'text-red-400' :
+                        warningLevel === 'critical' ? 'text-orange-400' :
+                        warningLevel === 'warning' ? 'text-yellow-400' :
+                        'text-green-400'
+                      }`}>
+                        <Clock className="w-4 h-4" />
+                        <span className="font-mono font-bold">
+                          {warningLevel === 'expired' ? 'EXPIRED' : getTimeRemaining(penalty)}
+                        </span>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => expirePenalty(penalty.id)}
+                        className="text-white border-white/20"
+                      >
+                        End
+                      </Button>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </CardContent>
