@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { FieldCard } from './FieldCard';
 import { CreateFieldForm } from './CreateFieldForm';
@@ -12,6 +11,7 @@ interface FieldsTabProps {
   onFieldNameChange: (value: string) => void;
   onFieldLocationChange: (value: string) => void;
   onCreateField: () => void;
+  onFieldUpdated: () => void;
 }
 
 export const FieldsTab: React.FC<FieldsTabProps> = ({
@@ -21,7 +21,8 @@ export const FieldsTab: React.FC<FieldsTabProps> = ({
   fieldLocation,
   onFieldNameChange,
   onFieldLocationChange,
-  onCreateField
+  onCreateField,
+  onFieldUpdated
 }) => {
   return (
     <div className="space-y-6">
@@ -39,6 +40,7 @@ export const FieldsTab: React.FC<FieldsTabProps> = ({
             key={field.id}
             field={field}
             gameCount={games.filter(g => g.field_id === field.id).length}
+            onFieldUpdated={onFieldUpdated}
           />
         ))}
       </div>
