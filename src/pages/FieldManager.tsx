@@ -12,6 +12,7 @@ import { CreateFieldForm } from '@/components/field-manager/CreateFieldForm';
 import { CreateGameForm } from '@/components/field-manager/CreateGameForm';
 import { CreateAdvertisementForm } from '@/components/field-manager/CreateAdvertisementForm';
 import type { Game, Field, Advertisement } from '@/types/game';
+import type { AppRole } from '@/types/user';
 
 const FieldManager: React.FC = () => {
   const { user, profile } = useAuth();
@@ -60,9 +61,9 @@ const FieldManager: React.FC = () => {
       if (!existingRoles || existingRoles.length === 0) {
         console.log('User has no roles, assigning default roles...');
         
-        const rolesToAssign = [
-          { user_id: user.id, role: 'admin' },
-          { user_id: user.id, role: 'scorekeeper' }
+        const rolesToAssign: Array<{ user_id: string; role: AppRole }> = [
+          { user_id: user.id, role: 'admin' as AppRole },
+          { user_id: user.id, role: 'scorekeeper' as AppRole }
         ];
 
         const { error: assignError } = await supabase
