@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -13,7 +12,7 @@ import { useAdvertisementOperations } from '@/hooks/useAdvertisementOperations';
 
 const FieldManager: React.FC = () => {
   const { user } = useAuth();
-  const { fields, games, advertisements, loading, fetchFields, fetchGames, fetchAdvertisements } = useFieldManagerData();
+  const { fields, games, advertisements, loading, fetchFields, fetchGames, fetchAdvertisements, refetchData } = useFieldManagerData();
   
   const fieldOps = useFieldOperations(fetchFields);
   const gameOps = useGameOperations(fetchGames);
@@ -72,6 +71,7 @@ const FieldManager: React.FC = () => {
               onFieldNameChange={fieldOps.setNewFieldName}
               onFieldLocationChange={fieldOps.setNewFieldLocation}
               onCreateField={fieldOps.createField}
+              onFieldUpdated={refetchData}
             />
           </TabsContent>
 
