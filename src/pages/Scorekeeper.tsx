@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -16,7 +16,7 @@ import type { Game, Field } from '@/types/game';
 const Scorekeeper = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { canOperateScoreboard, loading: rolesLoading, error: rolesError, primaryRole, roles } = useUserRoles();
+  const { primaryRole, roles, loading: rolesLoading, error: rolesError } = useUserRoles();
   const { toast } = useToast();
   
   const [selectedGameId, setSelectedGameId] = useState<string>('');
@@ -26,53 +26,14 @@ const Scorekeeper = () => {
   
   const { game, isLoading: gameLoading } = useGameRealtime(selectedGameId);
 
-  console.log('Scorekeeper: Component state', {
-    user: !!user,
-    rolesLoading,
-    canOperate: canOperateScoreboard(),
-    primaryRole,
-    rolesCount: roles.length,
-    loading,
-    error
-  });
+  // Memoize permission check to prevent re-computation
+  const canOperateScoreboard = useMemo(() => {
+    if (!primaryRole) return false;
+    return ['super_admin', 'admin', 'director', 'scorekeeper'].includes(primaryRole);
+  }, [primaryRole]);
 
-  useEffect(() => {
-    console.log('Scorekeeper: Main effect triggered');
-    
-    if (!user) {
-      console.log('Scorekeeper: No user, redirecting to auth');
-      navigate('/auth');
-      return;
-    }
-    
-    if (rolesLoading) {
-      console.log('Scorekeeper: Roles still loading, waiting...');
-      return;
-    }
-
-    if (rolesError) {
-      console.log('Scorekeeper: Roles error detected:', rolesError);
-      setError(rolesError);
-      setLoading(false);
-      return;
-    }
-    
-    console.log('Scorekeeper: Checking scorekeeper permissions');
-    const canOperate = canOperateScoreboard();
-    console.log('Scorekeeper: Permission check result:', canOperate);
-    
-    if (!canOperate) {
-      console.log('Scorekeeper: User cannot operate scoreboard');
-      setError(`Access Denied: You currently have ${primaryRole || 'spectator'} access. Contact your administrator for scorekeeper permissions.`);
-      setLoading(false);
-      return;
-    }
-
-    console.log('Scorekeeper: User has scorekeeper access, fetching data');
-    fetchScorekeeperData();
-  }, [user, canOperateScoreboard, rolesLoading, rolesError, primaryRole]);
-
-  const fetchScorekeeperData = async () => {
+  // Memoize fetchScorekeeperData to prevent recreation
+  const fetchScorekeeperData = useCallback(async () => {
     if (!user) return;
     
     console.log('Scorekeeper: Starting data fetch');
@@ -128,10 +89,51 @@ const Scorekeeper = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user, toast]);
+
+  // Simplified useEffect with stable dependencies
+  useEffect(() => {
+    console.log('Scorekeeper: Main effect triggered', { 
+      user: !!user, 
+      rolesLoading, 
+      primaryRole, 
+      canOperate: canOperateScoreboard 
+    });
+    
+    if (!user) {
+      console.log('Scorekeeper: No user, redirecting to auth');
+      navigate('/auth');
+      return;
+    }
+    
+    if (rolesLoading) {
+      console.log('Scorekeeper: Roles still loading, waiting...');
+      return;
+    }
+
+    if (rolesError) {
+      console.log('Scorekeeper: Roles error detected:', rolesError);
+      setError(rolesError);
+      setLoading(false);
+      return;
+    }
+    
+    if (!canOperateScoreboard) {
+      console.log('Scorekeeper: User cannot operate scoreboard');
+      setError(`Access Denied: You currently have ${primaryRole || 'spectator'} access. Contact your administrator for scorekeeper permissions.`);
+      setLoading(false);
+      return;
+    }
+
+    console.log('Scorekeeper: User has scorekeeper access, fetching data');
+    fetchScorekeeperData();
+  }, [user, rolesLoading, rolesError, primaryRole, canOperateScoreboard, fetchScorekeeperData, navigate]);
+
+  // Consolidated loading state
+  const isLoading = loading || rolesLoading;
 
   // Show loading state
-  if (loading || rolesLoading) {
+  if (isLoading) {
     console.log('Scorekeeper: Showing loading state');
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 flex items-center justify-center">
