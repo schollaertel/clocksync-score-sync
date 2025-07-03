@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus } from 'lucide-react';
+import { Plus, Upload } from 'lucide-react';
 import type { Field } from '@/types/game';
 
 interface CreateAdvertisementFormProps {
@@ -33,6 +33,25 @@ export const CreateAdvertisementForm: React.FC<CreateAdvertisementFormProps> = (
   onPositionChange,
   onSubmit
 }) => {
+  const [selectedImage, setSelectedImage] = React.useState<File | null>(null);
+  const [startDate, setStartDate] = React.useState('');
+  const [endDate, setEndDate] = React.useState('');
+  const [previewUrl, setPreviewUrl] = React.useState<string>('');
+
+  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      setSelectedImage(file);
+      const url = URL.createObjectURL(file);
+      setPreviewUrl(url);
+    }
+  };
+
+  const handleSubmitWithImage = () => {
+    // For now, call the original submit - we'll enhance this to handle image upload
+    onSubmit();
+  };
+
   return (
     <Card className="bg-slate-800 border-slate-700">
       <CardHeader>
@@ -96,7 +115,67 @@ export const CreateAdvertisementForm: React.FC<CreateAdvertisementFormProps> = (
             </Select>
           </div>
         </div>
-        <Button onClick={onSubmit} className="bg-purple-600 hover:bg-purple-700">
+
+        {/* Advertisement Schedule */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <Label htmlFor="startDate" className="text-gray-300">Start Date</Label>
+            <Input
+              id="startDate"
+              type="date"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+              className="bg-slate-700 border-slate-600 text-white"
+            />
+          </div>
+          <div>
+            <Label htmlFor="endDate" className="text-gray-300">End Date</Label>
+            <Input
+              id="endDate"
+              type="date"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+              className="bg-slate-700 border-slate-600 text-white"
+            />
+          </div>
+        </div>
+
+        {/* Image Upload */}
+        <div>
+          <Label className="text-gray-300">Advertisement Image</Label>
+          <div className="mt-2">
+            <div className="flex items-center gap-4">
+              <label className="cursor-pointer">
+                <div className="flex items-center gap-2 px-4 py-2 bg-slate-700 border border-slate-600 rounded-md text-white hover:bg-slate-600 transition-colors">
+                  <Upload className="w-4 h-4" />
+                  Choose Image
+                </div>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                  className="hidden"
+                />
+              </label>
+              {selectedImage && (
+                <span className="text-sm text-gray-300">
+                  {selectedImage.name}
+                </span>
+              )}
+            </div>
+            {previewUrl && (
+              <div className="mt-4">
+                <img
+                  src={previewUrl}
+                  alt="Advertisement preview"
+                  className="max-w-xs h-32 object-cover rounded-md border border-slate-600"
+                />
+              </div>
+            )}
+          </div>
+        </div>
+
+        <Button onClick={handleSubmitWithImage} className="bg-purple-600 hover:bg-purple-700">
           Create Advertisement
         </Button>
       </CardContent>

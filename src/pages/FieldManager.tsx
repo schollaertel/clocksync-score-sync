@@ -35,9 +35,54 @@ const FieldManager: React.FC = () => {
   useEffect(() => {
     console.log('FieldManager mounted, user:', user?.email);
     if (user) {
+      // Check if user needs role assignment
+      checkAndAssignRoles();
       fetchData();
     }
   }, [user]);
+
+  const checkAndAssignRoles = async () => {
+    if (!user) return;
+    
+    try {
+      // Check if user has any roles
+      const { data: existingRoles, error } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', user.id);
+
+      if (error) {
+        console.error('Error checking user roles:', error);
+        return;
+      }
+
+      // If user has no roles, assign default roles
+      if (!existingRoles || existingRoles.length === 0) {
+        console.log('User has no roles, assigning default roles...');
+        
+        const rolesToAssign = [
+          { user_id: user.id, role: 'admin' },
+          { user_id: user.id, role: 'scorekeeper' }
+        ];
+
+        const { error: assignError } = await supabase
+          .from('user_roles')
+          .insert(rolesToAssign);
+
+        if (assignError) {
+          console.error('Error assigning roles:', assignError);
+        } else {
+          console.log('Default roles assigned successfully');
+          toast({
+            title: 'Roles Assigned',
+            description: 'You now have admin and scorekeeper access.',
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Error in role assignment:', error);
+    }
+  };
 
   const fetchData = async () => {
     try {
@@ -205,7 +250,7 @@ const FieldManager: React.FC = () => {
         game_status: 'scheduled',
         home_score: 0,
         away_score: 0,
-        time_remaining: 720
+        time_remaining: 720 // Default 12 minutes
       }]);
 
     if (error) {
@@ -386,34 +431,32 @@ const FieldManager: React.FC = () => {
           </TabsContent>
 
           <TabsContent value="games">
-            <PlanGate feature="scoreboard">
-              <div className="space-y-6">
-                <CreateGameForm
-                  fields={fields}
-                  selectedField={selectedField}
-                  homeTeam={newGameHomeTeam}
-                  awayTeam={newGameAwayTeam}
-                  dateTime={newGameDateTime}
-                  onFieldSelect={setSelectedField}
-                  onHomeTeamChange={setNewGameHomeTeam}
-                  onAwayTeamChange={setNewGameAwayTeam}
-                  onDateTimeChange={setNewGameDateTime}
-                  onSubmit={createGame}
-                />
+            <div className="space-y-6">
+              <CreateGameForm
+                fields={fields}
+                selectedField={selectedField}
+                homeTeam={newGameHomeTeam}
+                awayTeam={newGameAwayTeam}
+                dateTime={newGameDateTime}
+                onFieldSelect={setSelectedField}
+                onHomeTeamChange={setNewGameHomeTeam}
+                onAwayTeamChange={setNewGameAwayTeam}
+                onDateTimeChange={setNewGameDateTime}
+                onSubmit={createGame}
+              />
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {games.map((game) => (
-                    <GameCard key={game.id} game={game} />
-                  ))}
-                </div>
-
-                {games.length === 0 && (
-                  <div className="text-center py-12">
-                    <p className="text-gray-400 text-lg">No games scheduled yet. Create your first game above!</p>
-                  </div>
-                )}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {games.map((game) => (
+                  <GameCard key={game.id} game={game} />
+                ))}
               </div>
-            </PlanGate>
+
+              {games.length === 0 && (
+                <div className="text-center py-12">
+                  <p className="text-gray-400 text-lg">No games scheduled yet. Create your first game above!</p>
+                </div>
+              )}
+            </div>
           </TabsContent>
 
           <TabsContent value="ads">
