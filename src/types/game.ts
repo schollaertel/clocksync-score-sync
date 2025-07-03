@@ -1,4 +1,3 @@
-
 export interface Game {
   id: string;
   field_id: string;
@@ -14,12 +13,19 @@ export interface Game {
   created_at: string;
 }
 
+export type QRCodeType = 'permanent' | 'temporary';
+
 export interface Field {
   id: string;
   name: string;
   location: string;
   organization_id: string;
   qr_code: string;
+  qr_code_type: QRCodeType;
+  qr_code_expires_at?: string;
+  qr_code_locked: boolean;
+  qr_code_updated_at: string;
+  qr_code_updated_by?: string;
   subscription_plan?: string;
   created_at: string;
 }
@@ -32,5 +38,18 @@ export interface Advertisement {
   ad_image_url?: string;
   monthly_rate?: number;
   is_active: boolean;
+  created_at: string;
+}
+
+export interface QRCodeAudit {
+  id: string;
+  field_id: string;
+  user_id: string;
+  action: 'created' | 'updated' | 'locked' | 'unlocked' | 'regenerated';
+  old_qr_code?: string;
+  new_qr_code?: string;
+  old_expires_at?: string;
+  new_expires_at?: string;
+  reason?: string;
   created_at: string;
 }
