@@ -1,3 +1,4 @@
+
 export interface Game {
   id: string;
   field_id: string;
@@ -8,9 +9,92 @@ export interface Game {
   home_score: number;
   away_score: number;
   scheduled_time: string;
-  game_status: 'scheduled' | 'active' | 'completed' | 'cancelled';
+  game_status: 'scheduled' | 'active' | 'completed' | 'cancelled' | 'paused' | 'intermission';
   time_remaining: number;
   created_at: string;
+  // Enhanced fields for period management
+  current_period: number;
+  total_periods: number;
+  period_length_minutes: number;
+  intermission_length_minutes: number;
+  period_start_time?: string;
+  last_updated?: string;
+}
+
+export interface Penalty {
+  id: string;
+  game_id: string;
+  team: 'home' | 'away';
+  player_name: string;
+  penalty_type: string;
+  duration_minutes: number;
+  started_at: string;
+  expires_at: string;
+  is_active: boolean;
+  created_at: string;
+}
+
+export interface GameEvent {
+  id: string;
+  game_id: string;
+  event_type: 'goal' | 'penalty' | 'penalty_end' | 'period_start' | 'period_end' | 'game_start' | 'game_end' | 'timeout';
+  event_time: string;
+  game_time_remaining?: number;
+  description?: string;
+  metadata?: {
+    team?: 'home' | 'away';
+    player_name?: string;
+    penalty_id?: string;
+    period?: number;
+    [key: string]: any;
+  };
+  created_at: string;
+}
+
+export interface NotificationSubscription {
+  id: string;
+  user_id?: string;
+  game_id?: string;
+  field_id?: string;
+  event_types: ('penalty_end' | 'period_end' | 'goal' | 'game_start' | 'game_end')[];
+  is_active: boolean;
+  push_endpoint?: string;
+  push_keys?: {
+    p256dh: string;
+    auth: string;
+  };
+  created_at: string;
+}
+
+export interface GameWithDetails extends Game {
+  penalties?: Penalty[];
+  recent_events?: GameEvent[];
+  field?: Field;
+}
+
+export interface PenaltyWithTimeLeft extends Penalty {
+  time_left_seconds: number;
+  time_left_display: string;
+}
+
+export interface NotificationPayload {
+  title: string;
+  body: string;
+  icon?: string;
+  badge?: string;
+  tag?: string;
+  data?: {
+    game_id: string;
+    event_type: string;
+    url?: string;
+  };
+}
+
+export interface AudioAlert {
+  type: 'penalty_end' | 'period_end' | 'goal' | 'timeout';
+  frequency: number;
+  duration: number;
+  pattern: 'single' | 'double' | 'triple' | 'continuous';
 }
 
 export type QRCodeType = 'permanent' | 'temporary';

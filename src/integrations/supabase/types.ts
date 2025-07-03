@@ -180,6 +180,42 @@ export type Database = {
           },
         ]
       }
+      discovery_sources: {
+        Row: {
+          active: boolean | null
+          created_at: string | null
+          id: string
+          notes: string | null
+          platform: string
+          region_focus: string | null
+          source_type: string
+          updated_at: string | null
+          url: string
+        }
+        Insert: {
+          active?: boolean | null
+          created_at?: string | null
+          id?: string
+          notes?: string | null
+          platform: string
+          region_focus?: string | null
+          source_type: string
+          updated_at?: string | null
+          url: string
+        }
+        Update: {
+          active?: boolean | null
+          created_at?: string | null
+          id?: string
+          notes?: string | null
+          platform?: string
+          region_focus?: string | null
+          source_type?: string
+          updated_at?: string | null
+          url?: string
+        }
+        Relationships: []
+      }
       feature_flags: {
         Row: {
           created_at: string | null
@@ -247,6 +283,11 @@ export type Database = {
           name: string
           organization_id: string | null
           qr_code: string
+          qr_code_expires_at: string | null
+          qr_code_locked: boolean | null
+          qr_code_type: string | null
+          qr_code_updated_at: string | null
+          qr_code_updated_by: string | null
           subscription_plan: string | null
         }
         Insert: {
@@ -256,6 +297,11 @@ export type Database = {
           name: string
           organization_id?: string | null
           qr_code: string
+          qr_code_expires_at?: string | null
+          qr_code_locked?: boolean | null
+          qr_code_type?: string | null
+          qr_code_updated_at?: string | null
+          qr_code_updated_by?: string | null
           subscription_plan?: string | null
         }
         Update: {
@@ -265,6 +311,11 @@ export type Database = {
           name?: string
           organization_id?: string | null
           qr_code?: string
+          qr_code_expires_at?: string | null
+          qr_code_locked?: boolean | null
+          qr_code_type?: string | null
+          qr_code_updated_at?: string | null
+          qr_code_updated_by?: string | null
           subscription_plan?: string | null
         }
         Relationships: [
@@ -277,48 +328,107 @@ export type Database = {
           },
         ]
       }
+      game_events: {
+        Row: {
+          created_at: string
+          description: string | null
+          event_time: string
+          event_type: string
+          game_id: string
+          game_time_remaining: number | null
+          id: string
+          metadata: Json | null
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          event_time?: string
+          event_type: string
+          game_id: string
+          game_time_remaining?: number | null
+          id?: string
+          metadata?: Json | null
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          event_time?: string
+          event_type?: string
+          game_id?: string
+          game_time_remaining?: number | null
+          id?: string
+          metadata?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "game_events_game_id_fkey"
+            columns: ["game_id"]
+            isOneToOne: false
+            referencedRelation: "games"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       games: {
         Row: {
           away_score: number | null
           away_team: string
           away_team_logo_url: string | null
           created_at: string | null
+          current_period: number | null
           field_id: string | null
           game_status: string | null
           home_score: number | null
           home_team: string
           home_team_logo_url: string | null
           id: string
+          intermission_length_minutes: number | null
+          last_updated: string | null
+          period_length_minutes: number | null
+          period_start_time: string | null
           scheduled_time: string
           time_remaining: number | null
+          total_periods: number | null
         }
         Insert: {
           away_score?: number | null
           away_team: string
           away_team_logo_url?: string | null
           created_at?: string | null
+          current_period?: number | null
           field_id?: string | null
           game_status?: string | null
           home_score?: number | null
           home_team: string
           home_team_logo_url?: string | null
           id?: string
+          intermission_length_minutes?: number | null
+          last_updated?: string | null
+          period_length_minutes?: number | null
+          period_start_time?: string | null
           scheduled_time: string
           time_remaining?: number | null
+          total_periods?: number | null
         }
         Update: {
           away_score?: number | null
           away_team?: string
           away_team_logo_url?: string | null
           created_at?: string | null
+          current_period?: number | null
           field_id?: string | null
           game_status?: string | null
           home_score?: number | null
           home_team?: string
           home_team_logo_url?: string | null
           id?: string
+          intermission_length_minutes?: number | null
+          last_updated?: string | null
+          period_length_minutes?: number | null
+          period_start_time?: string | null
           scheduled_time?: string
           time_remaining?: number | null
+          total_periods?: number | null
         }
         Relationships: [
           {
@@ -326,6 +436,170 @@ export type Database = {
             columns: ["field_id"]
             isOneToOne: false
             referencedRelation: "fields"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notification_preferences: {
+        Row: {
+          created_at: string
+          email_notifications: boolean | null
+          game_updates: boolean | null
+          id: string
+          payment_reminders: boolean | null
+          system_alerts: boolean | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          email_notifications?: boolean | null
+          game_updates?: boolean | null
+          id?: string
+          payment_reminders?: boolean | null
+          system_alerts?: boolean | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          email_notifications?: boolean | null
+          game_updates?: boolean | null
+          id?: string
+          payment_reminders?: boolean | null
+          system_alerts?: boolean | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      notification_subscriptions: {
+        Row: {
+          created_at: string
+          event_types: string[]
+          field_id: string | null
+          game_id: string | null
+          id: string
+          is_active: boolean
+          push_endpoint: string | null
+          push_keys: Json | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          event_types?: string[]
+          field_id?: string | null
+          game_id?: string | null
+          id?: string
+          is_active?: boolean
+          push_endpoint?: string | null
+          push_keys?: Json | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          event_types?: string[]
+          field_id?: string | null
+          game_id?: string | null
+          id?: string
+          is_active?: boolean
+          push_endpoint?: string | null
+          push_keys?: Json | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_subscriptions_field_id_fkey"
+            columns: ["field_id"]
+            isOneToOne: false
+            referencedRelation: "fields"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notification_subscriptions_game_id_fkey"
+            columns: ["game_id"]
+            isOneToOne: false
+            referencedRelation: "games"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notifications: {
+        Row: {
+          action_url: string | null
+          created_at: string
+          id: string
+          message: string
+          read: boolean | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          action_url?: string | null
+          created_at?: string
+          id?: string
+          message: string
+          read?: boolean | null
+          title: string
+          type?: string
+          user_id: string
+        }
+        Update: {
+          action_url?: string | null
+          created_at?: string
+          id?: string
+          message?: string
+          read?: boolean | null
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      penalties: {
+        Row: {
+          created_at: string
+          duration_minutes: number
+          expires_at: string
+          game_id: string
+          id: string
+          is_active: boolean
+          penalty_type: string
+          player_name: string
+          started_at: string
+          team: string
+        }
+        Insert: {
+          created_at?: string
+          duration_minutes?: number
+          expires_at: string
+          game_id: string
+          id?: string
+          is_active?: boolean
+          penalty_type: string
+          player_name: string
+          started_at?: string
+          team: string
+        }
+        Update: {
+          created_at?: string
+          duration_minutes?: number
+          expires_at?: string
+          game_id?: string
+          id?: string
+          is_active?: boolean
+          penalty_type?: string
+          player_name?: string
+          started_at?: string
+          team?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "penalties_game_id_fkey"
+            columns: ["game_id"]
+            isOneToOne: false
+            referencedRelation: "games"
             referencedColumns: ["id"]
           },
         ]
@@ -419,6 +693,88 @@ export type Database = {
           },
         ]
       }
+      qr_code_audit: {
+        Row: {
+          action: string
+          created_at: string | null
+          field_id: string | null
+          id: string
+          new_expires_at: string | null
+          new_qr_code: string | null
+          old_expires_at: string | null
+          old_qr_code: string | null
+          reason: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string | null
+          field_id?: string | null
+          id?: string
+          new_expires_at?: string | null
+          new_qr_code?: string | null
+          old_expires_at?: string | null
+          old_qr_code?: string | null
+          reason?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string | null
+          field_id?: string | null
+          id?: string
+          new_expires_at?: string | null
+          new_qr_code?: string | null
+          old_expires_at?: string | null
+          old_qr_code?: string | null
+          reason?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qr_code_audit_field_id_fkey"
+            columns: ["field_id"]
+            isOneToOne: false
+            referencedRelation: "fields"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      qr_code_scans: {
+        Row: {
+          created_at: string
+          field_id: string | null
+          id: string
+          ip_address: unknown | null
+          scan_time: string
+          user_agent: string | null
+        }
+        Insert: {
+          created_at?: string
+          field_id?: string | null
+          id?: string
+          ip_address?: unknown | null
+          scan_time?: string
+          user_agent?: string | null
+        }
+        Update: {
+          created_at?: string
+          field_id?: string | null
+          id?: string
+          ip_address?: unknown | null
+          scan_time?: string
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qr_code_scans_field_id_fkey"
+            columns: ["field_id"]
+            isOneToOne: false
+            referencedRelation: "fields"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       revenue_analytics: {
         Row: {
           created_at: string | null
@@ -457,6 +813,66 @@ export type Database = {
           },
         ]
       }
+      scraped_leads: {
+        Row: {
+          added_at: string | null
+          email: string | null
+          first_name: string | null
+          full_name: string | null
+          id: string
+          last_name: string | null
+          lead_score: number | null
+          location: string | null
+          notes: string | null
+          organization: string | null
+          phone: string | null
+          role: string | null
+          source_tag: string | null
+          source_url: string | null
+          status: string | null
+          updated_at: string | null
+          website: string | null
+        }
+        Insert: {
+          added_at?: string | null
+          email?: string | null
+          first_name?: string | null
+          full_name?: string | null
+          id?: string
+          last_name?: string | null
+          lead_score?: number | null
+          location?: string | null
+          notes?: string | null
+          organization?: string | null
+          phone?: string | null
+          role?: string | null
+          source_tag?: string | null
+          source_url?: string | null
+          status?: string | null
+          updated_at?: string | null
+          website?: string | null
+        }
+        Update: {
+          added_at?: string | null
+          email?: string | null
+          first_name?: string | null
+          full_name?: string | null
+          id?: string
+          last_name?: string | null
+          lead_score?: number | null
+          location?: string | null
+          notes?: string | null
+          organization?: string | null
+          phone?: string | null
+          role?: string | null
+          source_tag?: string | null
+          source_url?: string | null
+          status?: string | null
+          updated_at?: string | null
+          website?: string | null
+        }
+        Relationships: []
+      }
       spectator_access: {
         Row: {
           accessed_at: string | null
@@ -479,6 +895,51 @@ export type Database = {
             columns: ["field_id"]
             isOneToOne: false
             referencedRelation: "fields"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      spectator_analytics: {
+        Row: {
+          created_at: string
+          engagement_score: number | null
+          field_id: string | null
+          game_id: string | null
+          id: string
+          page_views: number | null
+          session_duration: number | null
+        }
+        Insert: {
+          created_at?: string
+          engagement_score?: number | null
+          field_id?: string | null
+          game_id?: string | null
+          id?: string
+          page_views?: number | null
+          session_duration?: number | null
+        }
+        Update: {
+          created_at?: string
+          engagement_score?: number | null
+          field_id?: string | null
+          game_id?: string | null
+          id?: string
+          page_views?: number | null
+          session_duration?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "spectator_analytics_field_id_fkey"
+            columns: ["field_id"]
+            isOneToOne: false
+            referencedRelation: "fields"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "spectator_analytics_game_id_fkey"
+            columns: ["game_id"]
+            isOneToOne: false
+            referencedRelation: "games"
             referencedColumns: ["id"]
           },
         ]
