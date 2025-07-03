@@ -1,13 +1,14 @@
-
 import { User, Session } from '@supabase/supabase-js';
 
 export type PlanTier = 'covered_game' | 'game_day' | 'season_pass';
+export type OrganizationType = 'facility' | 'tournament_company' | 'individual';
 
 export interface UserProfile {
   id: string;
   email: string;
   full_name: string;
   organization: string;
+  organization_type: OrganizationType;
   plan_tier: PlanTier;
   commission_pct: number;
   total_games_played: number;
@@ -21,7 +22,7 @@ export interface AuthContextType {
   user: User | null;
   session: Session | null;
   profile: UserProfile | null;
-  signUp: (email: string, password: string, fullName: string, organization: string) => Promise<{ error: any }>;
+  signUp: (email: string, password: string, fullName: string, organization: string, organizationType?: OrganizationType) => Promise<{ error: any }>;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
   loading: boolean;
