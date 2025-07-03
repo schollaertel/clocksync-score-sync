@@ -1,3 +1,5 @@
+export type QRCodeType = 'permanent' | 'temporary';
+
 export interface Game {
   id: string;
   field_id: string;
@@ -11,7 +13,7 @@ export interface Game {
   game_status: 'scheduled' | 'active' | 'completed' | 'cancelled' | 'paused' | 'intermission';
   time_remaining: number;
   created_at: string;
-  // Enhanced fields for period management - making them optional with defaults
+  // Enhanced fields for period management
   current_period?: number;
   total_periods?: number;
   period_length_minutes?: number;
@@ -24,7 +26,7 @@ export interface Field {
   id: string;
   name: string;
   location: string;
-  organization_id: string; // Making this required in our interface even though DB allows null
+  organization_id: string;
   qr_code: string;
   qr_code_type: QRCodeType;
   qr_code_expires_at?: string;
@@ -37,7 +39,7 @@ export interface Field {
 
 export interface Advertisement {
   id: string;
-  field_id: string; // Making this required in our interface even though DB allows null
+  field_id: string;
   advertiser_name: string;
   position: string;
   ad_image_url?: string;
@@ -46,4 +48,28 @@ export interface Advertisement {
   created_at: string;
 }
 
-// Rest of interfaces stay the same...
+// Phase 4: New Penalty Interface
+export interface Penalty {
+  id: string;
+  game_id: string;
+  team: 'home' | 'away';
+  player_name: string;
+  penalty_type: string;
+  duration_minutes: number;
+  started_at: string;
+  expires_at: string;
+  is_active: boolean;
+  created_at: string;
+}
+
+// Phase 4: Game Event Interface
+export interface GameEvent {
+  id: string;
+  game_id: string;
+  event_type: 'goal' | 'penalty' | 'period_start' | 'period_end' | 'timeout' | 'substitution';
+  event_time: string;
+  game_time_remaining?: number;
+  description?: string;
+  metadata?: any;
+  created_at: string;
+}
