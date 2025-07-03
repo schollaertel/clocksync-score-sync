@@ -100,21 +100,23 @@ export const useFieldManagerData = () => {
 
     console.log('Fields fetched:', data?.length || 0);
     
-    // Transform data to include all new QR code fields
-    const transformedFields: Field[] = (data || []).map(field => ({
-      id: field.id,
-      name: field.name,
-      location: field.location,
-      organization_id: field.organization_id,
-      qr_code: field.qr_code,
-      qr_code_type: field.qr_code_type || 'permanent',
-      qr_code_expires_at: field.qr_code_expires_at,
-      qr_code_locked: field.qr_code_locked || false,
-      qr_code_updated_at: field.qr_code_updated_at || field.created_at,
-      qr_code_updated_by: field.qr_code_updated_by,
-      subscription_plan: field.subscription_plan,
-      created_at: field.created_at
-    }));
+    // Transform data and filter out any fields without organization_id
+    const transformedFields: Field[] = (data || [])
+      .filter(field => field.organization_id) // Filter out null organization_id
+      .map(field => ({
+        id: field.id,
+        name: field.name,
+        location: field.location,
+        organization_id: field.organization_id!, // We know it's not null due to filter
+        qr_code: field.qr_code,
+        qr_code_type: field.qr_code_type || 'permanent',
+        qr_code_expires_at: field.qr_code_expires_at,
+        qr_code_locked: field.qr_code_locked || false,
+        qr_code_updated_at: field.qr_code_updated_at || field.created_at,
+        qr_code_updated_by: field.qr_code_updated_by,
+        subscription_plan: field.subscription_plan,
+        created_at: field.created_at || new Date().toISOString()
+      }));
     
     setFields(transformedFields);
   };
@@ -139,22 +141,31 @@ export const useFieldManagerData = () => {
       return;
     }
 
-    const transformedGames: Game[] = (data || []).map(game => ({
-      id: game.id,
-      field_id: game.field_id,
-      home_team: game.home_team,
-      away_team: game.away_team,
-      home_team_logo_url: game.home_team_logo_url,
-      away_team_logo_url: game.away_team_logo_url,
-      home_score: game.home_score || 0,
-      away_score: game.away_score || 0,
-      scheduled_time: game.scheduled_time,
-      game_status: (['scheduled', 'active', 'completed', 'cancelled'].includes(game.game_status)) 
-        ? game.game_status as Game['game_status']
-        : 'scheduled',
-      time_remaining: game.time_remaining || 720,
-      created_at: game.created_at
-    }));
+    const transformedGames: Game[] = (data || [])
+      .filter(game => game.field_id) // Filter out null field_id
+      .map(game => ({
+        id: game.id,
+        field_id: game.field_id!,
+        home_team: game.home_team,
+        away_team: game.away_team,
+        home_team_logo_url: game.home_team_logo_url,
+        away_team_logo_url: game.away_team_logo_url,
+        home_score: game.home_score || 0,
+        away_score: game.away_score || 0,
+        scheduled_time: game.scheduled_time,
+        game_status: (['scheduled', 'active', 'completed', 'cancelled', 'paused', 'intermission'].includes(game.game_status)) 
+          ? game.game_status as Game['game_status']
+          : 'scheduled',
+        time_remaining: game.time_remaining || 720,
+        created_at: game.created_at || new Date().toISOString(),
+        // Add the new optional fields with defaults
+        current_period: game.current_period || 1,
+        total_periods: game.total_periods || 2,
+        period_length_minutes: game.period_length_minutes || 15,
+        intermission_length_minutes: game.intermission_length_minutes || 5,
+        period_start_time: game.period_start_time,
+        last_updated: game.last_updated
+      }));
 
     console.log('Games fetched:', transformedGames.length);
     setGames(transformedGames);
@@ -180,8 +191,22 @@ export const useFieldManagerData = () => {
       return;
     }
 
-    console.log('Advertisements fetched:', data?.length || 0);
-    setAdvertisements(data || []);
+    // Transform and filter out any ads without field_id
+    const transformedAds: Advertisement[] = (data || [])
+      .filter(ad => ad.field_id)
+      .map(ad => ({
+        id: ad.id,
+        field_id: ad.field_id!,
+        advertiser_name: ad.advertiser_name,
+        position: ad.position,
+        ad_image_url: ad.ad_image_url,
+        monthly_rate: ad.monthly_rate,
+        is_active: ad.is_active || false,
+        created_at: ad.created_at || new Date().toISOString()
+      }));
+
+    console.log('Advertisements fetched:', transformedAds.length);
+    setAdvertisements(transformedAds);
   };
 
   return {
