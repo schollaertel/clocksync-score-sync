@@ -13,6 +13,9 @@ interface NotificationSubscription {
   is_active: boolean;
 }
 
+// Your real VAPID public key
+const VAPID_PUBLIC_KEY = 'BGRUptM9YKDXZWQ_64h_KmmSGTPZZtw5l-Z6Ym5ijBNvtmG2yZ3inqgHj59OiDz4su1hA7pHLk6N0qHNs_AofxY';
+
 export const useNotifications = () => {
   const { user } = useAuth();
   const [subscriptions, setSubscriptions] = useState<NotificationSubscription[]>([]);
@@ -21,12 +24,26 @@ export const useNotifications = () => {
 
   useEffect(() => {
     // Check if notifications are supported
-    setIsSupported('Notification' in window && 'serviceWorker' in navigator);
+    setIsSupported('Notification' in window && 'serviceWorker' in navigator && 'PushManager' in window);
     setPermission(Notification.permission);
+    
+    // Register service worker on component mount
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js')
+        .then(registration => {
+          console.log('Service Worker registered:', registration);
+        })
+        .catch(error => {
+          console.error('Service Worker registration failed:', error);
+        });
+    }
   }, []);
 
   const requestPermission = async (): Promise<boolean> => {
-    if (!isSupported) return false;
+    if (!isSupported) {
+      console.warn('Push notifications not supported');
+      return false;
+    }
 
     const result = await Notification.requestPermission();
     setPermission(result);
@@ -34,16 +51,36 @@ export const useNotifications = () => {
   };
 
   const subscribe = async (fieldId?: string, gameId?: string, eventTypes: string[] = ['penalty_end', 'goal']) => {
-    if (!user || !isSupported || permission !== 'granted') return;
+    if (!user || !isSupported || permission !== 'granted') {
+      console.warn('Cannot subscribe - user, support, or permission issue');
+      return false;
+    }
 
     try {
-      // Register service worker if not already registered
-      const registration = await navigator.serviceWorker.register('/sw.js');
-      
+      // Get or register service worker
+      let registration = await navigator.serviceWorker.getRegistration('/sw.js');
+      if (!registration) {
+        registration = await navigator.serviceWorker.register('/sw.js');
+      }
+
+      // Convert VAPID key from base64 to Uint8Array
+      const urlBase64ToUint8Array = (base64String: string) => {
+        const padding = '='.repeat((4 - base64String.length % 4) % 4);
+        const base64 = (base64String + padding)
+          .replace(/-/g, '+')
+          .replace(/_/g, '/');
+        const rawData = window.atob(base64);
+        const outputArray = new Uint8Array(rawData.length);
+        for (let i = 0; i < rawData.length; ++i) {
+          outputArray[i] = rawData.charCodeAt(i);
+        }
+        return outputArray;
+      };
+
       // Subscribe to push notifications
       const subscription = await registration.pushManager.subscribe({
         userVisibleOnly: true,
-        applicationServerKey: 'your-vapid-public-key' // You'll need to add this
+        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
       });
 
       // Save subscription to database
@@ -61,7 +98,7 @@ export const useNotifications = () => {
       if (error) throw error;
 
       await fetchSubscriptions();
-      
+      console.log('Push notification subscription successful');
       return true;
     } catch (error) {
       console.error('Error subscribing to notifications:', error);
