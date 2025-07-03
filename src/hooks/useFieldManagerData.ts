@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -15,7 +14,7 @@ export const useFieldManagerData = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    console.log('FieldManager mounted, user:', user?.email);
+    console.log('FieldManagerData mounted, user:', user?.email);
     if (user) {
       checkAndAssignRoles();
       fetchData();
@@ -100,7 +99,24 @@ export const useFieldManagerData = () => {
     }
 
     console.log('Fields fetched:', data?.length || 0);
-    setFields(data || []);
+    
+    // Transform data to include all new QR code fields
+    const transformedFields: Field[] = (data || []).map(field => ({
+      id: field.id,
+      name: field.name,
+      location: field.location,
+      organization_id: field.organization_id,
+      qr_code: field.qr_code,
+      qr_code_type: field.qr_code_type || 'permanent',
+      qr_code_expires_at: field.qr_code_expires_at,
+      qr_code_locked: field.qr_code_locked || false,
+      qr_code_updated_at: field.qr_code_updated_at || field.created_at,
+      qr_code_updated_by: field.qr_code_updated_by,
+      subscription_plan: field.subscription_plan,
+      created_at: field.created_at
+    }));
+    
+    setFields(transformedFields);
   };
 
   const fetchGames = async () => {
