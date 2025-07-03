@@ -1,14 +1,15 @@
-
 import React from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
-import { Clock, Settings, LogOut, Menu } from 'lucide-react';
+import { Settings, LogOut, BarChart3, Shield } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { PlanBadge } from '@/components/PlanBadge';
+import { useUserRoles } from '@/hooks/useUserRoles';
 
 export const Header: React.FC = () => {
   const { user, profile, signOut } = useAuth();
+  const { hasRole } = useUserRoles();
   const navigate = useNavigate();
 
   const handleSignOut = async () => {
@@ -17,6 +18,8 @@ export const Header: React.FC = () => {
   };
 
   if (!user) return null;
+
+  const isAdmin = hasRole('super_admin') || hasRole('admin');
 
   return (
     <header className="bg-gradient-to-r from-slate-900 to-slate-800 shadow-lg border-b border-white/10">
@@ -54,6 +57,24 @@ export const Header: React.FC = () => {
               >
                 Scorekeeper
               </Button>
+              <Button 
+                variant="ghost" 
+                onClick={() => navigate('/analytics')}
+                className="text-gray-300 hover:text-white hover:bg-white/10 border-0"
+              >
+                <BarChart3 className="w-4 h-4 mr-2" />
+                Analytics
+              </Button>
+              {isAdmin && (
+                <Button 
+                  variant="ghost" 
+                  onClick={() => navigate('/admin')}
+                  className="text-gray-300 hover:text-white hover:bg-white/10 border-0"
+                >
+                  <Shield className="w-4 h-4 mr-2" />
+                  Admin
+                </Button>
+              )}
               <Button 
                 variant="ghost" 
                 onClick={() => navigate('/spectator')}
