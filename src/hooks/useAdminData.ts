@@ -1,0 +1,93 @@
+import { useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
+
+interface AdminData {
+  totalUsers: number;
+  totalOrganizations: number;
+  totalFields: number;
+  totalRevenue: number;
+  activeGames: number;
+  recentUsers: Array<{
+    id: string;
+    email: string;
+    full_name: string;
+    organization: string;
+    created_at: string;
+  }>;
+  platformAnalytics: Array<{
+    date: string;
+    total_organizations: number;
+    total_mrr: number;
+    platform_revenue: number;
+  }>;
+  auditLogs: Array<{
+    id: string;
+    action: string;
+    admin_email: string;
+    created_at: string;
+    target_id: string;
+  }>;
+}
+
+export const useAdminData = () => {
+  const { toast } = useToast();
+  const [data, setData] = useState<AdminData | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchAdminData();
+  }, []);
+
+  const fetchAdminData = async () => {
+    try {
+      setLoading(true);
+
+      // Fetch platform-wide statistics
+      const [usersResult, fieldsResult, gamesResult, platformResult, auditResult] = await Promise.all([
+        supabase.from('profiles').select('*', { count: 'exact' }).order('created_at', { ascending: false }).limit(10),
+        supabase.from('fields').select('id', { count: 'exact' }),
+        supabase.from('games').select('game_status', { count: 'exact' }),
+        supabase.from('platform_analytics').select('*').order('date', { ascending: false }).limit(30),
+        supabase.from('audit_logs').select('*').order('created_at', { ascending: false }).limit(50)
+      ]);
+
+      const activeGames = gamesResult.data?.filter(g => g.game_status === 'active').length || 0;
+      const totalRevenue = platformResult.data?.reduce((sum, record) => sum + (record.platform_revenue || 0), 0) || 0;
+
+      const adminData: AdminData = {
+        totalUsers: usersResult.count || 0,
+        totalOrganizations: usersResult.data?.filter(u => u.organization_type === 'facility' || u.organization_type === 'tournament_company').length || 0,
+        totalFields: fieldsResult.count || 0,
+        totalRevenue,
+        activeGames,
+        recentUsers: usersResult.data?.map(user => ({
+          id: user.id,
+          email: user.email,
+          full_name: user.full_name,
+          organization: user.organization,
+          created_at: user.created_at
+        })) || [],
+        platformAnalytics: platformResult.data || [],
+        auditLogs: auditResult.data || []
+      };
+
+      setData(adminData);
+    } catch (error) {
+      console.error('Error fetching admin data:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to load admin data',
+        variant: 'destructive',
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return {
+    data,
+    loading,
+    refetch: fetchAdminData
+  };
+};
