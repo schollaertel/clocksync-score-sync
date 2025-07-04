@@ -12,6 +12,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { usePenaltyTracking } from '@/hooks/usePenaltyTracking';
 import { useNotifications } from '@/hooks/useNotifications';
 import type { Game } from '@/types/game';
+import { formatTime } from '@/lib/formatTime';
 
 interface ScorekeeperControlsProps {
   game: Game;
@@ -164,11 +165,6 @@ export const ScorekeeperControls: React.FC<ScorekeeperControlsProps> = ({
     }
   };
 
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = Math.floor(seconds % 60);
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-  };
 
   const getTimeRemaining = (penalty: any) => {
     const expires = new Date(penalty.expires_at);

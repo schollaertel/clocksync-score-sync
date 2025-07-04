@@ -6,6 +6,7 @@ import { Users, Clock } from "lucide-react";
 import { useGameRealtime } from '@/hooks/useGameRealtime';
 import { supabase } from '@/integrations/supabase/client';
 import type { Advertisement } from '@/types/game';
+import { formatTime } from '@/lib/formatTime';
 
 interface RealtimeScoreboardProps {
   gameId?: string;
@@ -61,11 +62,6 @@ export const RealtimeScoreboard: React.FC<RealtimeScoreboardProps> = ({
     };
   }, [game?.field_id, showAds]);
 
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = Math.floor(seconds % 60);
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-  };
 
   if (isLoading) {
     return (
