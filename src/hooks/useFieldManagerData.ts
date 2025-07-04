@@ -3,7 +3,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import type { Game, Field, Advertisement } from '@/types/game';
-import type { AppRole } from '@/types/user';
 
 export const useFieldManagerData = () => {
   const { user } = useAuth();
@@ -16,14 +15,14 @@ export const useFieldManagerData = () => {
   useEffect(() => {
     console.log('FieldManagerData mounted, user:', user?.email);
     if (user) {
-      checkAndAssignRoles();
+      warnOnMissingRoles();
       fetchData();
     }
   }, [user]);
 
-  const checkAndAssignRoles = async () => {
+  const warnOnMissingRoles = async () => {
     if (!user) return;
-    
+
     try {
       const { data: existingRoles, error } = await supabase
         .from('user_roles')
@@ -36,29 +35,14 @@ export const useFieldManagerData = () => {
       }
 
       if (!existingRoles || existingRoles.length === 0) {
-        console.log('User has no roles, assigning default roles...');
-        
-        const rolesToAssign: Array<{ user_id: string; role: AppRole }> = [
-          { user_id: user.id, role: 'admin' as AppRole },
-          { user_id: user.id, role: 'scorekeeper' as AppRole }
-        ];
-
-        const { error: assignError } = await supabase
-          .from('user_roles')
-          .insert(rolesToAssign);
-
-        if (assignError) {
-          console.error('Error assigning roles:', assignError);
-        } else {
-          console.log('Default roles assigned successfully');
-          toast({
-            title: 'Roles Assigned',
-            description: 'You now have admin and scorekeeper access.',
-          });
-        }
+        toast({
+          title: 'No Roles Assigned',
+          description: 'Please contact an administrator to obtain access.',
+          variant: 'destructive',
+        });
       }
     } catch (error) {
-      console.error('Error in role assignment:', error);
+      console.error('Error checking user roles:', error);
     }
   };
 
