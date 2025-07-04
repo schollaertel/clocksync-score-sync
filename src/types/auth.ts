@@ -1,14 +1,9 @@
-import { User, Session } from '@supabase/supabase-js';
-
-export type PlanTier = 'covered_game' | 'game_day' | 'season_pass';
-export type OrganizationType = 'facility' | 'tournament_company' | 'individual';
-
 export interface UserProfile {
   id: string;
   email: string;
   full_name: string;
   organization: string;
-  organization_type: OrganizationType;
+  organization_type?: OrganizationType; // Make optional
   plan_tier: PlanTier;
   commission_pct: number;
   total_games_played: number;
