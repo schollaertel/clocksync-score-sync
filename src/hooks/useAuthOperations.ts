@@ -1,8 +1,14 @@
-
 import { supabase } from '@/integrations/supabase/client';
+import type { OrganizationType } from '@/types/auth';
 
 export const useAuthOperations = () => {
-  const signUp = async (email: string, password: string, fullName: string, organization: string) => {
+  const signUp = async (
+    email: string, 
+    password: string, 
+    fullName: string, 
+    organization: string, 
+    organizationType: OrganizationType = 'individual'
+  ) => {
     console.log('useAuthOperations: signUp called');
     const redirectUrl = `${window.location.origin}/`;
     
@@ -14,6 +20,7 @@ export const useAuthOperations = () => {
         data: {
           full_name: fullName,
           organization: organization,
+          organization_type: organizationType,
         }
       }
     });
