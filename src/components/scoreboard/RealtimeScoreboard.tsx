@@ -1,9 +1,9 @@
-
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Users, Clock } from "lucide-react";
 import { useGameRealtime } from '@/hooks/useGameRealtime';
+import { useGameCountdown } from '@/hooks/useGameCountdown';
 import { supabase } from '@/integrations/supabase/client';
 import type { Advertisement } from '@/types/game';
 
@@ -19,6 +19,7 @@ export const RealtimeScoreboard: React.FC<RealtimeScoreboardProps> = ({
   showAds = true 
 }) => {
   const { game, isLoading, error } = useGameRealtime(gameId, fieldId);
+  const { formattedTime, isActive } = useGameCountdown(game);
   const [advertisements, setAdvertisements] = useState<Advertisement[]>([]);
   const [period, setPeriod] = useState(2);
 
@@ -61,12 +62,6 @@ export const RealtimeScoreboard: React.FC<RealtimeScoreboardProps> = ({
     };
   }, [game?.field_id, showAds]);
 
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = Math.floor(seconds % 60);
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-  };
-
   if (isLoading) {
     return (
       <div className="flex items-center justify-center p-8">
@@ -101,11 +96,11 @@ export const RealtimeScoreboard: React.FC<RealtimeScoreboardProps> = ({
             {game.home_team} vs {game.away_team}
           </CardTitle>
           <div className="flex items-center justify-center gap-4">
-            <Badge className={`${game.game_status === 'active' ? 'bg-red-500' : 'bg-gray-500'} text-white`}>
-              {game.game_status === 'active' && (
+            <Badge className={`${isActive ? 'bg-red-500' : 'bg-gray-500'} text-white`}>
+              {isActive && (
                 <div className="w-2 h-2 bg-white rounded-full mr-2 animate-pulse"></div>
               )}
-              {game.game_status === 'active' ? 'LIVE' : game.game_status.toUpperCase()}
+              {isActive ? 'LIVE' : game.game_status.toUpperCase()}
             </Badge>
             <Badge className="bg-blue-500 text-white">
               Period {period}
@@ -113,15 +108,15 @@ export const RealtimeScoreboard: React.FC<RealtimeScoreboardProps> = ({
           </div>
         </CardHeader>
         <CardContent>
-          {/* Game Clock */}
+          {/* Game Clock - Now with real countdown */}
           <div className="text-center mb-8">
             <div className="text-5xl md:text-7xl font-mono font-bold text-white mb-2">
-              {formatTime(game.time_remaining)}
+              {formattedTime}
             </div>
-            {game.game_status === 'active' && (
+            {isActive && (
               <div className="flex items-center justify-center gap-2">
                 <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
-                <span className="text-green-400 font-semibold">LIVE SYNC</span>
+                <span className="text-green-400 font-semibold">LIVE COUNTDOWN</span>
               </div>
             )}
           </div>
