@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -6,12 +5,6 @@ import type { UserProfile } from '@/types/auth';
 
 export const useProfileManager = (user: User | null, setLoading: (loading: boolean) => void) => {
   const [profile, setProfile] = useState<UserProfile | null>(null);
-
-  console.log('useProfileManager: Hook initialized', { 
-    user: !!user, 
-    profile: !!profile,
-    userId: user?.id 
-  });
 
   const fetchProfile = useCallback(async (userId: string) => {
     console.log('useProfileManager: fetchProfile called for user', userId);
@@ -24,9 +17,8 @@ export const useProfileManager = (user: User | null, setLoading: (loading: boole
 
       if (error) {
         console.error('useProfileManager: Error fetching profile:', error);
-        // If profile doesn't exist, create a basic one
         if (error.code === 'PGRST116') {
-          console.log('useProfileManager: Profile not found, user needs to complete setup');
+          console.log('useProfileManager: Profile not found, waiting for creation...');
           return null;
         }
         throw error;
@@ -38,8 +30,9 @@ export const useProfileManager = (user: User | null, setLoading: (loading: boole
       const profileData: UserProfile = {
         id: data.id,
         email: data.email,
-        full_name: data.full_name,
-        organization: data.organization,
+        full_name: data.full_name || '',
+        organization: data.organization || '',
+        organization_type: data.organization_type || 'individual',
         plan_tier: (data.plan_tier as UserProfile['plan_tier']) || 'covered_game',
         commission_pct: data.commission_pct ?? 60,
         total_games_played: data.total_games_played ?? 0,
@@ -70,20 +63,36 @@ export const useProfileManager = (user: User | null, setLoading: (loading: boole
   useEffect(() => {
     if (user) {
       console.log('useProfileManager: User found, fetching profile...');
-      setTimeout(() => {
-        fetchProfile(user.id).then(profileData => {
-          console.log('useProfileManager: Profile fetch completed', !!profileData);
-          setProfile(profileData);
-          setLoading(false);
-        }).catch(error => {
+      
+      // Give a brief delay to allow profile creation trigger to complete
+      const timeoutId = setTimeout(async () => {
+        try {
+          let profileData = await fetchProfile(user.id);
+          
+          // If profile doesn't exist yet, wait a bit and try again
+          if (!profileData) {
+            console.log('useProfileManager: Profile not found, retrying in 2 seconds...');
+            setTimeout(async () => {
+              profileData = await fetchProfile(user.id);
+              setProfile(profileData);
+              setLoading(false);
+            }, 2000);
+          } else {
+            setProfile(profileData);
+            setLoading(false);
+          }
+        } catch (error) {
           console.error('useProfileManager: Profile fetch failed:', error);
           setProfile(null);
           setLoading(false);
-        });
-      }, 0);
+        }
+      }, 500);
+
+      return () => clearTimeout(timeoutId);
     } else {
       console.log('useProfileManager: No user, clearing profile');
       setProfile(null);
+      // Don't set loading to false here - let useAuthState handle it
     }
   }, [user, fetchProfile, setLoading]);
 
