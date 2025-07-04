@@ -180,42 +180,6 @@ export type Database = {
           },
         ]
       }
-      discovery_sources: {
-        Row: {
-          active: boolean | null
-          created_at: string | null
-          id: string
-          notes: string | null
-          platform: string
-          region_focus: string | null
-          source_type: string
-          updated_at: string | null
-          url: string
-        }
-        Insert: {
-          active?: boolean | null
-          created_at?: string | null
-          id?: string
-          notes?: string | null
-          platform: string
-          region_focus?: string | null
-          source_type: string
-          updated_at?: string | null
-          url: string
-        }
-        Update: {
-          active?: boolean | null
-          created_at?: string | null
-          id?: string
-          notes?: string | null
-          platform?: string
-          region_focus?: string | null
-          source_type?: string
-          updated_at?: string | null
-          url?: string
-        }
-        Relationships: []
-      }
       feature_flags: {
         Row: {
           created_at: string | null
@@ -812,66 +776,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
-      }
-      scraped_leads: {
-        Row: {
-          added_at: string | null
-          email: string | null
-          first_name: string | null
-          full_name: string | null
-          id: string
-          last_name: string | null
-          lead_score: number | null
-          location: string | null
-          notes: string | null
-          organization: string | null
-          phone: string | null
-          role: string | null
-          source_tag: string | null
-          source_url: string | null
-          status: string | null
-          updated_at: string | null
-          website: string | null
-        }
-        Insert: {
-          added_at?: string | null
-          email?: string | null
-          first_name?: string | null
-          full_name?: string | null
-          id?: string
-          last_name?: string | null
-          lead_score?: number | null
-          location?: string | null
-          notes?: string | null
-          organization?: string | null
-          phone?: string | null
-          role?: string | null
-          source_tag?: string | null
-          source_url?: string | null
-          status?: string | null
-          updated_at?: string | null
-          website?: string | null
-        }
-        Update: {
-          added_at?: string | null
-          email?: string | null
-          first_name?: string | null
-          full_name?: string | null
-          id?: string
-          last_name?: string | null
-          lead_score?: number | null
-          location?: string | null
-          notes?: string | null
-          organization?: string | null
-          phone?: string | null
-          role?: string | null
-          source_tag?: string | null
-          source_url?: string | null
-          status?: string | null
-          updated_at?: string | null
-          website?: string | null
-        }
-        Relationships: []
       }
       spectator_access: {
         Row: {

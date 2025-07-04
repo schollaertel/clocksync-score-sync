@@ -3,7 +3,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Clock, Users, Trophy, AlertCircle } from 'lucide-react';
 import { useGameRealtime } from '@/hooks/useGameRealtime';
-import { useGameCountdown } from '@/hooks/useGameCountdown';
+import { useGameClock } from '@/hooks/useGameClock';
 import { supabase } from '@/integrations/supabase/client';
 import type { Advertisement } from '@/types/game';
 
@@ -19,7 +19,7 @@ export const RealtimeScoreboard: React.FC<RealtimeScoreboardProps> = ({
   showAds = false
 }) => {
   const { game, isLoading, error } = useGameRealtime(gameId, fieldId);
-  const { formattedTime, isActive } = useGameCountdown(game);
+  const { formattedTime, isActive } = useGameClock({ game });
   const [advertisements, setAdvertisements] = useState<Advertisement[]>([]);
 
   useEffect(() => {
@@ -39,7 +39,14 @@ export const RealtimeScoreboard: React.FC<RealtimeScoreboardProps> = ({
         .eq('is_active', true);
 
       if (error) throw error;
-      setAdvertisements(data || []);
+      setAdvertisements((data || []).map(ad => ({
+        ...ad,
+        field_id: ad.field_id || '',
+        ad_image_url: ad.ad_image_url || undefined,
+        monthly_rate: ad.monthly_rate || 0,
+        is_active: ad.is_active ?? true,
+        created_at: ad.created_at || new Date().toISOString()
+      })));
     } catch (error) {
       console.error('Error fetching advertisements:', error);
     }

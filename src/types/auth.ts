@@ -1,3 +1,8 @@
+import { User, Session } from '@supabase/supabase-js';
+
+export type OrganizationType = 'individual' | 'facility' | 'tournament_company';
+export type PlanTier = 'covered_game' | 'game_day' | 'season_pass';
+
 export interface UserProfile {
   id: string;
   email: string;

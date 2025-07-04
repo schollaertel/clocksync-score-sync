@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
-import type { UserProfile } from '@/types/auth';
+import type { UserProfile, OrganizationType } from '@/types/auth';
 
 export const useProfileManager = (user: User | null, setLoading: (loading: boolean) => void) => {
   const [profile, setProfile] = useState<UserProfile | null>(null);
@@ -32,14 +32,14 @@ export const useProfileManager = (user: User | null, setLoading: (loading: boole
         email: data.email,
         full_name: data.full_name || '',
         organization: data.organization || '',
-        organization_type: data.organization_type || 'individual',
+        organization_type: (data.organization_type as OrganizationType) || 'individual',
         plan_tier: (data.plan_tier as UserProfile['plan_tier']) || 'covered_game',
         commission_pct: data.commission_pct ?? 60,
         total_games_played: data.total_games_played ?? 0,
         active_ads_count: data.active_ads_count ?? 0,
         fields_count: data.fields_count ?? 0,
-        created_at: data.created_at,
-        updated_at: data.updated_at
+        created_at: data.created_at || new Date().toISOString(),
+        updated_at: data.updated_at || new Date().toISOString()
       };
 
       return profileData;
