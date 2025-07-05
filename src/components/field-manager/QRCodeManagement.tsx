@@ -2,14 +2,12 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { Calendar, Lock, Unlock, RefreshCw, Clock, AlertTriangle } from 'lucide-react';
 import { useQRCodeManagement } from '@/hooks/useQRCodeManagement';
-import { useAuth } from '@/contexts/AuthContext';
 import type { Field } from '@/types/game';
 import { format } from 'date-fns';
 
@@ -19,7 +17,6 @@ interface QRCodeManagementProps {
 }
 
 export const QRCodeManagement: React.FC<QRCodeManagementProps> = ({ field, onFieldUpdated }) => {
-  const { profile } = useAuth();
   const { loading, canManageQRCode, canRegenerateQRCode, regenerateQRCode, updateQRCodeExpiration, toggleQRCodeLock } = useQRCodeManagement(onFieldUpdated);
   
   const [showRegenerateDialog, setShowRegenerateDialog] = useState(false);
@@ -35,7 +32,6 @@ export const QRCodeManagement: React.FC<QRCodeManagementProps> = ({ field, onFie
 
   const isExpired = field.qr_code_expires_at && new Date(field.qr_code_expires_at) < new Date();
   const isPermanent = field.qr_code_type === 'permanent';
-  const isFacility = profile?.organization_type === 'facility';
 
   const handleRegenerateQRCode = async () => {
     await regenerateQRCode(field, regenerateReason);

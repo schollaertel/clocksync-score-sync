@@ -1,5 +1,4 @@
 
-import React from 'react';
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Home } from "lucide-react";
@@ -20,9 +19,10 @@ const Spectator = () => {
 
   const hashParams = getHashParams();
   const fieldId = searchParams.get('field') || hashParams.get('field') || params.fieldId;
+  const fieldIdForComponent: string | undefined = fieldId || undefined;
   const gameIdFromQuery = searchParams.get('gameId') || hashParams.get('gameId');
   const gameIdFromParams = params.gameId;
-  const gameId = gameIdFromParams || gameIdFromQuery;
+  const gameId: string | undefined = gameIdFromParams || gameIdFromQuery || undefined;
   
   console.log('Spectator URL parameters:', { fieldId, gameId, gameIdFromQuery, gameIdFromParams });
 
@@ -58,7 +58,7 @@ const Spectator = () => {
       <div className="max-w-4xl mx-auto">
         <RealtimeScoreboard 
           gameId={gameId} 
-          fieldId={fieldId || undefined}
+          fieldId={fieldIdForComponent}
           showAds={true}
         />
       </div>

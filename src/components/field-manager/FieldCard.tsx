@@ -3,8 +3,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { QRCodeGenerator } from '@/components/QRCodeGenerator';
 import { QRCodeManagement } from './QRCodeManagement';
-import { MapPin, Lock, Clock, AlertTriangle } from 'lucide-react';
-import type { Field, Game } from '@/types/game';
+import { MapPin, Lock, AlertTriangle } from 'lucide-react';
+import type { Field } from '@/types/game';
 import { useAuth } from '@/contexts/AuthContext';
 import { format } from 'date-fns';
 

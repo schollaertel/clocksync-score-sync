@@ -4,7 +4,7 @@ import { useRevenue } from '@/hooks/useRevenue';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { PlanGate } from '@/components/PlanGate';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { BarChart3, DollarSign, Users, Activity, TrendingUp, Eye } from 'lucide-react';
+import { BarChart3, DollarSign, Activity, Eye } from 'lucide-react';
 
 const Analytics: React.FC = () => {
   const { data: analyticsData, loading: analyticsLoading } = useAnalytics();

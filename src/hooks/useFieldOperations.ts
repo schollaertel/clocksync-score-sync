@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import type { Field, QRCodeType } from '@/types/game';
+import type { QRCodeType } from '@/types/game';
 import type { OrganizationType } from '@/types/auth';
 
 export const useFieldOperations = (onFieldCreated: () => void) => {

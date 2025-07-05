@@ -33,8 +33,6 @@ export const CreateGameForm: React.FC<CreateGameFormProps> = ({
   onDateTimeChange,
   onSubmit
 }) => {
-  const [homeTeamLogo, setHomeTeamLogo] = React.useState<File | null>(null);
-  const [awayTeamLogo, setAwayTeamLogo] = React.useState<File | null>(null);
   const [homeLogoPreview, setHomeLogoPreview] = React.useState<string>('');
   const [awayLogoPreview, setAwayLogoPreview] = React.useState<string>('');
   const [gameDuration, setGameDuration] = React.useState('720'); // 12 minutes default
@@ -42,7 +40,6 @@ export const CreateGameForm: React.FC<CreateGameFormProps> = ({
   const handleHomeLogoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      setHomeTeamLogo(file);
       const url = URL.createObjectURL(file);
       setHomeLogoPreview(url);
     }
@@ -51,7 +48,6 @@ export const CreateGameForm: React.FC<CreateGameFormProps> = ({
   const handleAwayLogoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      setAwayTeamLogo(file);
       const url = URL.createObjectURL(file);
       setAwayLogoPreview(url);
     }

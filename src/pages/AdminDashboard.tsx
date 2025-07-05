@@ -128,7 +128,7 @@ const AdminDashboard: React.FC = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {adminData?.platformAnalytics?.slice(0, 10).map((record, index) => (
+                  {adminData?.platformAnalytics?.slice(0, 10).map((record) => (
                     <div key={record.date} className="flex items-center justify-between">
                       <div className="flex items-center space-x-3">
                         <div className="w-2 h-2 bg-blue-400 rounded-full"></div>

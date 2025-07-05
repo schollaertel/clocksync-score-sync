@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -11,7 +11,7 @@ import { ScorekeeperControls } from '@/components/scoreboard/ScorekeeperControls
 import { RealtimeScoreboard } from '@/components/scoreboard/RealtimeScoreboard';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import type { Game, Field } from '@/types/game';
+import type { Game } from '@/types/game';
 
 const Scorekeeper = () => {
   const navigate = useNavigate();
@@ -24,7 +24,7 @@ const Scorekeeper = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
-  const { game, isLoading: gameLoading } = useGameRealtime(selectedGameId);
+  const { game } = useGameRealtime(selectedGameId);
 
   // Memoize permission check to prevent re-computation
   const canOperateScoreboard = useMemo(() => {

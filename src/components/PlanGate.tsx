@@ -4,7 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Lock, Crown, Zap, Star } from 'lucide-react';
+import { Lock, Crown, Zap } from 'lucide-react';
 
 interface PlanGateProps {
   children: React.ReactNode;
