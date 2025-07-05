@@ -46,7 +46,7 @@ export const useGameClock = ({ game, isScorekeeper = false }: UseGameClockProps)
     };
   }, [game?.id]);
 
-  // Scorekeeper-only: Local countdown timer
+  // Scorekeeper-only: Local countdown timer with batched DB updates
   useEffect(() => {
     if (!isScorekeeper || !isActive || timeRemaining <= 0) return;
 
@@ -54,14 +54,17 @@ export const useGameClock = ({ game, isScorekeeper = false }: UseGameClockProps)
       setTimeRemaining(prev => {
         const newTime = Math.max(0, prev - 1);
         
-        // Update database every second when active
-        if (game?.id) {
+        // Auto-complete game when time reaches 0
+        if (newTime === 0 && game?.id) {
           supabase
             .from('games')
-            .update({ time_remaining: newTime })
+            .update({ 
+              time_remaining: 0,
+              game_status: 'completed'
+            })
             .eq('id', game.id)
             .then(({ error }) => {
-              if (error) console.error('Error updating game time:', error);
+              if (error) console.error('Error completing game:', error);
             });
         }
         
@@ -69,7 +72,23 @@ export const useGameClock = ({ game, isScorekeeper = false }: UseGameClockProps)
       });
     }, 1000);
 
-    return () => clearInterval(interval);
+    // Update database every 5 seconds instead of every second for better performance
+    const dbUpdateInterval = setInterval(() => {
+      if (game?.id && isActive && timeRemaining > 0) {
+        supabase
+          .from('games')
+          .update({ time_remaining: timeRemaining })
+          .eq('id', game.id)
+          .then(({ error }) => {
+            if (error) console.error('Error updating game time:', error);
+          });
+      }
+    }, 5000);
+
+    return () => {
+      clearInterval(interval);
+      clearInterval(dbUpdateInterval);
+    };
   }, [isScorekeeper, isActive, timeRemaining, game?.id]);
 
   // Format time for display

@@ -52,7 +52,8 @@ const Scorekeeper = () => {
             location
           )
         `)
-        .in('game_status', ['scheduled', 'active'])
+        .in('game_status', ['scheduled', 'active', 'paused'])
+        .order('game_status', { ascending: false })
         .order('scheduled_time', { ascending: true });
 
       if (gamesError) {
