@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import type { Game } from '@/types/game';
 
@@ -10,14 +10,97 @@ interface UseGameClockProps {
 export const useGameClock = ({ game, isScorekeeper = false }: UseGameClockProps) => {
   const [timeRemaining, setTimeRemaining] = useState<number>(0);
   const [isActive, setIsActive] = useState(false);
+  
+  // Use refs to avoid stale closure issues
+  const gameRef = useRef(game);
+  const timeRef = useRef(0);
+  const isActiveRef = useRef(false);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const dbUpdateRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Update refs when state changes
+  useEffect(() => {
+    gameRef.current = game;
+    timeRef.current = timeRemaining;
+    isActiveRef.current = isActive;
+  }, [game, timeRemaining, isActive]);
+
+  // Local timer functions (declared early to avoid dependency issues)
+  const stopLocalTimer = useCallback(() => {
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+    if (dbUpdateRef.current) {
+      clearInterval(dbUpdateRef.current);
+      dbUpdateRef.current = null;
+    }
+  }, []);
+
+  const startLocalTimer = useCallback(() => {
+    // Clear existing timer
+    stopLocalTimer();
+
+    // Start local countdown timer
+    timerRef.current = setInterval(() => {
+      setTimeRemaining(prev => {
+        const newTime = Math.max(0, prev - 1);
+        timeRef.current = newTime;
+        
+        // Auto-complete game when time reaches 0 (scorekeeper only)
+        if (newTime === 0 && isScorekeeper && gameRef.current?.id) {
+          supabase
+            .from('games')
+            .update({ 
+              time_remaining: 0,
+              game_status: 'completed'
+            })
+            .eq('id', gameRef.current.id)
+            .then(({ error }) => {
+              if (error) console.error('Error completing game:', error);
+            });
+          
+          // Stop local timer
+          stopLocalTimer();
+        }
+        
+        return newTime;
+      });
+    }, 1000);
+
+    // Scorekeeper: Periodic database updates
+    if (isScorekeeper) {
+      dbUpdateRef.current = setInterval(() => {
+        if (gameRef.current?.id && isActiveRef.current && timeRef.current > 0) {
+          supabase
+            .from('games')
+            .update({ time_remaining: timeRef.current })
+            .eq('id', gameRef.current.id)
+            .then(({ error }) => {
+              if (error) console.error('Error updating game time:', error);
+            });
+        }
+      }, 5000); // Update database every 5 seconds
+    }
+  }, [isScorekeeper, stopLocalTimer]);
 
   // Initialize time from game data
   useEffect(() => {
     if (game) {
-      setTimeRemaining(game.time_remaining || 0);
-      setIsActive(game.game_status === 'active');
+      const newTime = game.time_remaining || 0;
+      const newActive = game.game_status === 'active';
+      
+      setTimeRemaining(newTime);
+      setIsActive(newActive);
+      
+      // Start local timer if game is active
+      if (newActive && newTime > 0) {
+        startLocalTimer();
+      } else {
+        stopLocalTimer();
+      }
     }
-  }, [game]);
+  }, [game?.id, game?.time_remaining, game?.game_status, startLocalTimer, stopLocalTimer]);
 
   // Real-time sync - listen to database changes
   useEffect(() => {
@@ -35,61 +118,35 @@ export const useGameClock = ({ game, isScorekeeper = false }: UseGameClockProps)
         },
         (payload) => {
           const updatedGame = payload.new as Game;
-          setTimeRemaining(updatedGame.time_remaining || 0);
-          setIsActive(updatedGame.game_status === 'active');
+          const newTime = updatedGame.time_remaining || 0;
+          const newActive = updatedGame.game_status === 'active';
+          
+          // Sync local state with database state
+          setTimeRemaining(newTime);
+          setIsActive(newActive);
+          
+          // Restart timer with new state
+          if (newActive && newTime > 0) {
+            startLocalTimer();
+          } else {
+            stopLocalTimer();
+          }
         }
       )
       .subscribe();
 
     return () => {
       supabase.removeChannel(channel);
+      stopLocalTimer();
     };
-  }, [game?.id]);
+  }, [game?.id, startLocalTimer, stopLocalTimer]);
 
-  // Scorekeeper-only: Local countdown timer with batched DB updates
+  // Cleanup on unmount
   useEffect(() => {
-    if (!isScorekeeper || !isActive || timeRemaining <= 0) return;
-
-    const interval = setInterval(() => {
-      setTimeRemaining(prev => {
-        const newTime = Math.max(0, prev - 1);
-        
-        // Auto-complete game when time reaches 0
-        if (newTime === 0 && game?.id) {
-          supabase
-            .from('games')
-            .update({ 
-              time_remaining: 0,
-              game_status: 'completed'
-            })
-            .eq('id', game.id)
-            .then(({ error }) => {
-              if (error) console.error('Error completing game:', error);
-            });
-        }
-        
-        return newTime;
-      });
-    }, 1000);
-
-    // Update database every 5 seconds instead of every second for better performance
-    const dbUpdateInterval = setInterval(() => {
-      if (game?.id && isActive && timeRemaining > 0) {
-        supabase
-          .from('games')
-          .update({ time_remaining: timeRemaining })
-          .eq('id', game.id)
-          .then(({ error }) => {
-            if (error) console.error('Error updating game time:', error);
-          });
-      }
-    }, 5000);
-
     return () => {
-      clearInterval(interval);
-      clearInterval(dbUpdateInterval);
+      stopLocalTimer();
     };
-  }, [isScorekeeper, isActive, timeRemaining, game?.id]);
+  }, [stopLocalTimer]);
 
   // Format time for display
   const formatTime = useCallback((seconds: number): string => {
