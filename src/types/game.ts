@@ -2,24 +2,24 @@ export type QRCodeType = 'permanent' | 'temporary';
 
 export interface Game {
   id: string;
-  field_id: string;
+  field_id: string | null;
   home_team: string;
   away_team: string;
-  home_team_logo_url?: string;
-  away_team_logo_url?: string;
+  home_team_logo_url?: string | null;
+  away_team_logo_url?: string | null;
   home_score: number;
   away_score: number;
   scheduled_time: string;
   game_status: 'scheduled' | 'active' | 'completed' | 'cancelled' | 'paused' | 'intermission';
   time_remaining: number;
-  created_at: string;
+  created_at: string | null;
   // Enhanced fields for period management
-  current_period?: number;
-  total_periods?: number;
-  period_length_minutes?: number;
-  intermission_length_minutes?: number;
-  period_start_time?: string;
-  last_updated?: string;
+  current_period?: number | null;
+  total_periods?: number | null;
+  period_length_minutes?: number | null;
+  intermission_length_minutes?: number | null;
+  period_start_time?: string | null;
+  last_updated?: string | null;
 }
 
 export interface Field {
@@ -28,12 +28,12 @@ export interface Field {
   location: string;
   organization_id: string;
   qr_code: string;
-  qr_code_type: QRCodeType;
-  qr_code_expires_at?: string;
+  qr_code_type: string;
+  qr_code_expires_at?: string | null;
   qr_code_locked: boolean;
-  qr_code_updated_at: string;
-  qr_code_updated_by?: string;
-  subscription_plan?: string;
+  qr_code_updated_at: string | null;
+  qr_code_updated_by?: string | null;
+  subscription_plan?: string | null;
   created_at: string;
 }
 
@@ -42,8 +42,8 @@ export interface Advertisement {
   field_id: string;
   advertiser_name: string;
   position: string;
-  ad_image_url?: string;
-  monthly_rate?: number;
+  ad_image_url?: string | null;
+  monthly_rate?: number | null;
   is_active: boolean;
   created_at: string;
 }

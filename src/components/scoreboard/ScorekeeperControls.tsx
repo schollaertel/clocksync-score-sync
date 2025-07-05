@@ -155,7 +155,7 @@ export const ScorekeeperControls: React.FC<ScorekeeperControlsProps> = ({
       }
     }
 
-    const success = await subscribe(game.field_id, game.id, ['penalty_end', 'goal', 'penalty']);
+    const success = await subscribe(game.field_id || undefined, game.id, ['penalty_end', 'goal', 'penalty']);
     if (success) {
       toast({
         title: 'Notifications Enabled',

@@ -5,8 +5,8 @@ export interface UserRole {
   id: string;
   user_id: string;
   role: AppRole;
-  organization_id?: string;
-  created_at: string;
+  organization_id?: string | null;
+  created_at: string | null;
 }
 
 export interface FieldAssignment {
@@ -22,7 +22,7 @@ export interface SpectatorRegistration {
   id: string;
   user_id: string;
   email: string;
-  first_name?: string;
-  last_name?: string;
-  registered_at: string;
+  first_name?: string | null;
+  last_name?: string | null;
+  registered_at: string | null;
 }

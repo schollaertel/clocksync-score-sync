@@ -45,26 +45,27 @@ export const useGameCountdown = (game: Game | null) => {
       return;
     }
 
-    const interval = setInterval(() => {
+    const interval = setInterval(async () => {
       setLocalTimeRemaining(prev => {
         const newTime = Math.max(0, prev - 1);
         
         // Update database every 15 seconds
         const timeSinceLastSync = Date.now() - lastSyncTime;
         if (timeSinceLastSync >= 15000) {
-          supabase
-            .from('games')
-            .update({ 
-              time_remaining: newTime,
-              last_updated: new Date().toISOString()
-            })
-            .eq('id', game.id)
-            .then(() => {
+          (async () => {
+            try {
+              await supabase
+                .from('games')
+                .update({ 
+                  time_remaining: newTime,
+                  last_updated: new Date().toISOString()
+                })
+                .eq('id', game.id);
               setLastSyncTime(Date.now());
-            })
-            .catch(error => {
+            } catch (error) {
               console.error('Failed to update game time:', error);
-            });
+            }
+          })();
         }
         
         return newTime;

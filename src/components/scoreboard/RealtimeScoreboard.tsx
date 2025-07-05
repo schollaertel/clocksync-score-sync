@@ -24,7 +24,7 @@ export const RealtimeScoreboard: React.FC<RealtimeScoreboardProps> = ({
 
   useEffect(() => {
     if (showAds && (fieldId || game?.field_id)) {
-      fetchAdvertisements(fieldId || game?.field_id);
+      fetchAdvertisements(fieldId || game?.field_id || undefined);
     }
   }, [showAds, fieldId, game?.field_id]);
 
