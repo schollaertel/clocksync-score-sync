@@ -31,6 +31,8 @@ cd <YOUR_PROJECT_NAME>
 
 # Step 3: Install the necessary dependencies.
 npm i
+# Or run the provided setup script to install dependencies automatically.
+./setup.sh
 
 # Step 4: Start the development server with auto-reloading and an instant preview.
 npm run dev
