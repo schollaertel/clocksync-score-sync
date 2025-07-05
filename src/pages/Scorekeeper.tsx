@@ -238,7 +238,7 @@ const Scorekeeper = () => {
                 <SelectContent>
                   {availableGames.map((game) => (
                     <SelectItem key={game.id} value={game.id}>
-                      {game.home_team} vs {game.away_team} - {new Date(game.scheduled_time).toLocaleDateString()}
+                      {game.home_team} vs {game.away_team} - {new Date(game.scheduled_time).toLocaleDateString()} - {(game as any).fields?.name || 'Unknown Field'}
                     </SelectItem>
                   ))}
                 </SelectContent>
