@@ -65,7 +65,7 @@ export const useAdminData = () => {
       // Fix organization count logic - count distinct organizations
       const organizationTypes = ['facility', 'tournament_company'];
       const totalOrganizations = usersResult.data?.filter(u => 
-        organizationTypes.includes(u.organization_type)
+        u.organization_type && organizationTypes.includes(u.organization_type)
       ).length || 0;
 
       const adminData: AdminData = {
@@ -81,7 +81,12 @@ export const useAdminData = () => {
           organization: user.organization || '',
           created_at: user.created_at || ''
         })) || [],
-        platformAnalytics: platformResult.data || [],
+        platformAnalytics: platformResult.data?.map(record => ({
+          date: record.date,
+          total_organizations: record.total_organizations || 0,
+          total_mrr: record.total_mrr || 0,
+          platform_revenue: record.platform_revenue || 0
+        })) || [],
         auditLogs: auditResult.data?.map(log => ({
           id: log.id,
           action: log.action || '',

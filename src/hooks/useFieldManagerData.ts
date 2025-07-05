@@ -153,7 +153,7 @@ export const useFieldManagerData = () => {
         home_score: game.home_score || 0,
         away_score: game.away_score || 0,
         scheduled_time: game.scheduled_time,
-        game_status: (['scheduled', 'active', 'completed', 'cancelled', 'paused', 'intermission'].includes(game.game_status)) 
+        game_status: (game.game_status && ['scheduled', 'active', 'completed', 'cancelled', 'paused', 'intermission'].includes(game.game_status)) 
           ? game.game_status as Game['game_status']
           : 'scheduled',
         time_remaining: game.time_remaining || 720,

@@ -58,7 +58,7 @@ const Spectator = () => {
       <div className="max-w-4xl mx-auto">
         <RealtimeScoreboard 
           gameId={gameId} 
-          fieldId={fieldId} 
+          fieldId={fieldId || undefined}
           showAds={true}
         />
       </div>

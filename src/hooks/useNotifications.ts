@@ -92,7 +92,7 @@ export const useNotifications = () => {
           game_id: gameId,
           event_types: eventTypes,
           push_endpoint: subscription.endpoint,
-          push_keys: subscription.toJSON()
+          push_keys: subscription.toJSON() as any
         }]);
 
       if (error) throw error;
@@ -131,7 +131,13 @@ export const useNotifications = () => {
         .eq('is_active', true);
 
       if (error) throw error;
-      setSubscriptions(data || []);
+      setSubscriptions((data || []).map(sub => ({
+        ...sub,
+        user_id: sub.user_id || undefined,
+        field_id: sub.field_id || undefined,
+        game_id: sub.game_id || undefined,
+        push_endpoint: sub.push_endpoint || undefined
+      })));
     } catch (error) {
       console.error('Error fetching subscriptions:', error);
     }

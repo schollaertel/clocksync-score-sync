@@ -18,8 +18,8 @@ export const useQRCodeManagement = (onFieldUpdated: () => void) => {
     // Field owner can manage their own QR codes
     if (field.organization_id !== user.id) return false;
     
-    // Cannot manage locked QR codes unless super admin
-    if (field.qr_code_locked && profile.organization_type !== 'individual') return false;
+    // Cannot manage locked QR codes if individual user (only facilities/tournaments can)
+    if (field.qr_code_locked && !profile.organization_type) return false;
     
     return true;
   };
